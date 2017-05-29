@@ -37,7 +37,6 @@ body
     flex-direction: column;
     margin: 0px;
     background-color: #f4f4f4;
-    font-size: 12px;
 }
 #mainBox
 {
@@ -291,7 +290,6 @@ div.closeDlgIframe:before {
 
 .patientEncounterList .review
 {
-    font-size: x-small;
     padding: 2px;
     border: 1px solid black;
     background-color: lightgray;
@@ -459,9 +457,9 @@ div.menuLabel:hover {
 }
 
 .closeButton {
-        display:inline-block;
-        float:right;
-        position:relative;
-        top:6px;
-        right:5px;
+    display:inline-block;
+    float:right;
+    position:relative;
+    top:6px;
+    right:5px;
 }
