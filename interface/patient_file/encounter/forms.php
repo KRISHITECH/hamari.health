@@ -14,7 +14,12 @@ require_once("$srcdir/patient.inc");
 require_once("$srcdir/amc.php");
 require_once $GLOBALS['srcdir'].'/ESign/Api.php';
 require_once("$srcdir/../controllers/C_Document.class.php");
-require_once("forms_review_header.php");
+
+$reviewMode = false;
+if (!empty($_REQUEST['review_id'])) {
+    $reviewMode = true;
+    $encounter=$_REQUEST['review_id'];
+}
 
 $is_group = ($attendant_type == 'gid') ? true : false;
 if($attendant_type == 'gid'){
@@ -35,20 +40,14 @@ if($is_group && !acl_check("groups","glog",false, array('view','write'))){
 
 <?php html_header_show();?>
 <link rel="stylesheet" href="<?php echo $css_header;?>" type="text/css">
-<link rel="stylesheet" type="text/css" href="../../../library/js/fancybox-1.3.4/jquery.fancybox-1.3.4.css" media="screen" />
-<style type="text/css">@import url(../../../library/dynarch_calendar.css);</style>
 <link rel="stylesheet" type="text/css" href="<?php echo $GLOBALS['webroot'] ?>/library/ESign/css/esign.css" />
 <link rel="stylesheet" href="<?php echo $GLOBALS['assets_static_relative']; ?>/modified/dygraphs-2-0-0/dygraph.css" type="text/css"></script>
 
 <!-- supporting javascript code -->
-<script type="text/javascript" src="<?php echo $GLOBALS['assets_static_relative']; ?>/jquery-min-1-7-2/index.js"></script>
+<script type="text/javascript" src="<?php echo $GLOBALS['assets_static_relative']; ?>/jquery-min-3-1-1/index.js"></script>
 <script type="text/javascript" src="<?php echo $GLOBALS['webroot'] ?>/library/dialog.js?v=<?php echo $v_js_includes; ?>"></script>
 <script type="text/javascript" src="../../../library/textformat.js"></script>
-<script type="text/javascript" src="../../../library/dynarch_calendar.js"></script>
-<?php include_once("{$GLOBALS['srcdir']}/dynarch_calendar_en.inc.php"); ?>
-<script type="text/javascript" src="../../../library/dynarch_calendar_setup.js"></script>
 <script type="text/javascript" src="../../../library/js/common.js"></script>
-<script type="text/javascript" src="../../../library/js/fancybox-1.3.4/jquery.fancybox-1.3.4.js"></script>
 <script src="<?php echo $GLOBALS['webroot'] ?>/library/ESign/js/jquery.esign.js"></script>
 <script type="text/javascript" src="<?php echo $GLOBALS['assets_static_relative']; ?>/modified/dygraphs-2-0-0/dygraph.js?v=<?php echo $v_js_includes; ?>"></script>
 
@@ -133,7 +132,7 @@ jQuery(document).ready( function($) {
     $(".onerow").click(function() { GotoForm(this); });
 
     $("#prov_edu_res").click(function() {
-        if ( $('#prov_edu_res').attr('checked') ) {
+        if ( $('#prov_edu_res').prop('checked') ) {
             var mode = "add";
         }
         else {
@@ -152,7 +151,7 @@ jQuery(document).ready( function($) {
     });
 
     $("#provide_sum_pat_flag").click(function() {
-        if ( $('#provide_sum_pat_flag').attr('checked') ) {
+        if ( $('#provide_sum_pat_flag').prop('checked') ) {
             var mode = "add";
         }
         else {
@@ -171,7 +170,7 @@ jQuery(document).ready( function($) {
     });
 
     $("#trans_trand_care").click(function() {
-        if ( $('#trans_trand_care').attr('checked') ) {
+        if ( $('#trans_trand_care').prop('checked') ) {
             var mode = "add";
             // Enable the reconciliation checkbox
             $("#med_reconc_perf").removeAttr("disabled");
@@ -181,9 +180,9 @@ jQuery(document).ready( function($) {
             var mode = "remove";
             //Disable the reconciliation checkbox (also uncheck it if applicable)
             $("#med_reconc_perf").attr("disabled", true);
-            $("#med_reconc_perf").removeAttr("checked");
+            $("#med_reconc_perf").prop("checked",false);
 	    $("#soc_provided").attr("disabled",true);
-	    $("#soc_provided").removeAttr("checked");
+	    $("#soc_provided").prop("checked",false);
         }
         top.restoreSession();
         $.post( "../../../library/ajax/amc_misc_data.php",
@@ -198,7 +197,7 @@ jQuery(document).ready( function($) {
     });
 
     $("#med_reconc_perf").click(function() {
-        if ( $('#med_reconc_perf').attr('checked') ) {
+        if ( $('#med_reconc_perf').prop('checked') ) {
             var mode = "complete";
         }
         else {
@@ -216,7 +215,7 @@ jQuery(document).ready( function($) {
         );
     });
     $("#soc_provided").click(function(){
-        if($('#soc_provided').attr('checked')){
+        if($('#soc_provided').prop('checked')){
                 var mode = "soc_provided";
         }
         else{
@@ -264,6 +263,14 @@ jQuery(document).ready( function($) {
   }
 ?>
 
+    <?php if ($reviewMode) { ?>
+        $("body table:first").hide();
+        $(".encounter-summary-column").hide();
+        $(".css_button").hide();
+        $(".css_button_small").hide();
+        $(".encounter-summary-column:first").show();
+        $(".title:first").text("<?php echo xls("Review"); ?> " + $(".title:first").text() + " ("+<?php echo addslashes($encounter); ?>+")");
+    <?php } ?>
 });
 
  // Process click on Delete link.
@@ -365,9 +372,7 @@ $providerNameRes = getProviderName($providerIDres);
 <div class='encounter-summary-column'>
 <div>
 <?php
-$auth_notes_a  = acl_check('encounters', 'notes_a');
-$auth_notes    = acl_check('encounters', 'notes');
-$auth_relaxed  = acl_check('encounters', 'relaxed');
+$pass_sens_squad = true;
 
 if ($attendant_type == 'pid' && is_numeric($pid)) {
 
@@ -377,13 +382,13 @@ if ($attendant_type == 'pid' && is_numeric($pid)) {
     $result = getPatientData($pid, "fname,lname,squad");
     echo htmlspecialchars( xl('for','',' ',' ') . $result['fname'] . " " . $result['lname'] );
     if ($result['squad'] && ! acl_check('squads', $result['squad'])) {
-        $auth_notes_a = $auth_notes = $auth_relaxed = 0;
+        $pass_sens_squad = false;
     }
     // Check for no access to the encounter's sensitivity level.
     $result = sqlQuery("SELECT sensitivity FROM form_encounter WHERE " .
                         "pid = '$pid' AND encounter = '$encounter' LIMIT 1");
     if ($result['sensitivity'] && !acl_check('sensitivities', $result['sensitivity'])) {
-        $auth_notes_a = $auth_notes = $auth_relaxed = 0;
+        $pass_sens_squad = false;
     }
     // for therapy group
 } else {
@@ -393,13 +398,13 @@ if ($attendant_type == 'pid' && is_numeric($pid)) {
     $result = getGroup($groupId);
     echo htmlspecialchars( xl('for ','',' ',' ') . $result['group_name'] );
     if ($result['squad'] && ! acl_check('squads', $result['squad'])) {
-        $auth_notes_a = $auth_notes = $auth_relaxed = 0;
+        $pass_sens_squad = false;
     }
     // Check for no access to the encounter's sensitivity level.
     $result = sqlQuery("SELECT sensitivity FROM form_groups_encounter WHERE " .
         "group_id = ? AND encounter = ? LIMIT 1", array($groupId, $encounter));
     if ($result['sensitivity'] && !acl_check('sensitivities', $result['sensitivity'])) {
-        $auth_notes_a = $auth_notes = $auth_relaxed = 0;
+        $pass_sens_squad = false;
     }
 }
 ?>
@@ -577,7 +582,7 @@ if ( $esign->isButtonViewable() ) {
 
 <?php
 
-  if ($result = getFormByEncounter($attendant_id, $encounter, "id, date, form_id, form_name, formdir, user, deleted")) {
+  if ( ($pass_sens_squad) && ($result = getFormByEncounter($attendant_id, $encounter, "id, date, form_id, form_name, formdir, user, deleted")) ) {
     echo "<table width='100%' id='partable'>";
 	$divnos=1;
     foreach ($result as $iter) {
@@ -714,9 +719,11 @@ if ( $esign->isButtonViewable() ) {
     }
     echo "</table>";
 }
+if (!$pass_sens_squad) {
+    echo xlt("Not authorized to view this encounter");
+}
 ?>
 
 </div> <!-- end large encounter_forms DIV -->
 </body>
-<?php require_once("forms_review_footer.php"); ?>
 </html>
