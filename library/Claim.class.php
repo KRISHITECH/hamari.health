@@ -35,7 +35,7 @@ class Claim {
   var $encounter_id;      // encounter id
   var $procs;             // array of procedure rows from billing table
   var $diags;             // array of icd9 codes from billing table
-  var $diagtype= "ICD9";  // diagnosis code_type.Assume ICD9 unless otherwise specified.
+  var $diagtype= "ICD10"; // diagnosis code_type; safe to assume ICD10 now
   var $x12_partner;       // row from x12_partners table
   var $encounter;         // row from form_encounter table
   var $facility;          // row from facility table
@@ -44,7 +44,7 @@ class Claim {
   var $referrer;          // row from users table (referring provider)
   var $supervisor;        // row from users table (supervising provider)
   var $insurance_numbers; // row from insurance_numbers table for current payer
-  var $supervisor_numbers; // row from insurance_numbers table for current payer
+  var $supervisor_numbers;// row from insurance_numbers table for current payer
   var $patient_data;      // row from patient_data table
   var $billing_options;   // row from form_misc_billing_options table
   var $invoice;           // result from get_invoice_summary()
@@ -1044,9 +1044,18 @@ class Claim {
   function hospitalizedFrom() {
     return cleanDate($this->billing_options['hospitalization_date_from']);
   }
+  
+  function hospitalizedFromDateValid()
+  {
+      return $this->hospitalizedFrom()!=='';
+  }
 
   function hospitalizedTo() {
     return cleanDate($this->billing_options['hospitalization_date_to']);
+  }
+  function hospitalizedToDateValid()
+  {
+      return $this->hospitalizedTo()!=='';
   }
 
   function isOutsideLab() {
@@ -1084,9 +1093,22 @@ class Claim {
   function additionalNotes() {
     return x12clean(trim($this->billing_options['comments']));
   }
+  
+  function miscOnsetDate() {
+    return cleanDate($this->billing_options['onset_date']);
+  }
+
+  function miscOnsetDateValid()
+  {
+      return $this->miscOnsetDate()!=='';
+  }
 
   function dateInitialTreatment() {
     return cleanDate($this->billing_options['date_initial_treatment']);
+  }
+  
+  function dateInitialTreatmentValid() {
+    return $this->dateInitialTreatment()!=='';
   }
 
   function box14Qualifier()
