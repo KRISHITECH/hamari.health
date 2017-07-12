@@ -1,0 +1,441 @@
+<?php
+/* +-----------------------------------------------------------------------------+
+ *    OpenEMR - Open Source Electronic Medical Record
+ *    Copyright (C) 2013 Z&H Consultancy Services Private Limited <sam@zhservices.com>
+ *
+ *    This program is free software: you can redistribute it and/or modify
+ *    it under the terms of the GNU Affero General Public License as
+ *    published by the Free Software Foundation, either version 3 of the
+ *    License, or (at your option) any later version.
+ *
+ *    This program is distributed in the hope that it will be useful,
+ *    but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *    GNU Affero General Public License for more details.
+ *
+ *    You should have received a copy of the GNU Affero General Public License
+ *    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *    @author  Sanal Jacob <sanalj@zhservices.com>
+ * +------------------------------------------------------------------------------+
+ */
+?>
+<style type="text/css">
+    body{
+        line-height:1%;
+    } 
+    table,th, td
+    {
+        border: 1px solid black;
+    }
+    table{
+        cell-spacing:0;
+        cell-padding:0;
+        border-collapse:collapse;
+    } 
+    .tr{
+        font-size:12pt !important;
+        font-family:verdana !important;
+        color: #000000;
+        font-weight:bold;
+    }
+    td{
+        padding:5px;
+
+    }
+    .thead{
+        font-weight:bold;
+        background-color:#c0c0c0;
+    }   
+    #report_table_print tfoot{
+        display: table-footer-group;
+        bottom:0;
+    }
+    #report_table_print td{
+        font-size:8pt !important;
+        font-weight: normal;
+    }
+    .printbreak {
+        page-break-after: always;
+    }
+    @page {
+        margin: 50px 50px 0px 50px;
+    }
+    /*added by abhilash for printing footer on 22-feb-2013*/
+    @media all {
+        .page-break	{ display: none; }
+    }
+    @media print {
+        div.printbreak {page-break-after: always;}
+    }
+    #header {left: .8%; margin-top: 3%; right: 1%; text-align: center; background-color: white ;}
+    #footer {left: 0px;right: 0px; height: 50px; background-color: white;margin-top: 30%;}
+</style>
+<?php if ($ecncounterIds != '') { ?>
+    <body>
+    <?php } else { ?>  
+    <body onload="javascript:disPagenum();" >
+        <?php
+    }
+    $cnt = 0;
+    $i = 0;
+    ?>
+    <!-- Lab Result listing starts here------------------------------------->
+    <div id="header">
+        <table width="100%" cellpadding="0" cellspacing="0">
+            <tr>
+                <td style="text-align: center;" align='center'>
+                    <p style="font-size: x-large;">
+                        ZH Health Care
+                    </p>
+                </td>
+            </tr>
+            <tr>
+                <td id="labhead" class="labhead" style="text-align: center;" align='center'> </td>
+            </tr>
+        </table>
+    </div>
+    <table style="width:98%;" id="report_table_print" cellpadding="0" cellspacing="0">
+        <thead>
+            <tr>
+                <th colspan="15">Lab Results</th>
+            </tr>
+            <tr>
+                <th><?php echo xlt('Slno'); ?></th>
+                <th  colspan="5"><?php echo xlt('Order'); ?></th>     
+                <th  colspan="2"><?php echo xlt('Report'); ?></th>
+                <th  colspan="7"><?php echo xlt('Results and Recommendations'); ?></th>    
+            </tr>
+        </thead>
+        <tr>
+            <td  width='4%'>&nbsp;</td>
+            <td  width='4%'><b><?php echo xlt('PID'); ?></b></td>
+            <td  width='4%'><b><?php echo xlt('Patient Name'); ?></b></td>
+            <td  width='5%'><b><?php echo xlt('Order Date'); ?></b></td>
+            <!--<td  ><b><?php echo xlt('Procedure Name'); ?></b></td>-->
+            <td  width='3%'><b><?php echo xlt('Ord.No.'); ?></b></td>
+            <td  ><b><?php echo xlt('Status'); ?></b></td>
+            <td  title="<?php echo xlt('Time Collected'); ?>"><b><?php echo xlt('Time Collected'); ?></b></td>
+            <td  width='10%'><b><?php echo xlt('Status'); ?></b></td>
+            <td  ><b><?php echo xlt('Name'); ?></b></td>
+            <td  width='3%'><b><?php echo xlt('Abn'); ?></b></td>
+            <td  width='4%'><b><?php echo xlt('Value'); ?></b></td>
+            <td  width='5%'><b><?php echo xlt('Units'); ?></b></td>
+            <td  width='6%'><b><?php echo xlt('Range'); ?></b></td>
+            <td  width='4%'><b><?php echo xlt('Status'); ?></b></td>
+            <td  title="<?php echo xlt('Comments'); ?>"><b><?php echo xlt('Comm.'); ?></b></td>
+            <td style="display:none;"  width='5%'><b><?php echo xlt('order'); ?></b></td>
+        </tr>
+        <?php
+        $i = 0;
+        $main_grp = '';
+        $code_suffix = '';
+        $profile_grp = '';
+        $name_patient = '';
+        $name_patient_first = '';
+        $slno = 1;
+        $count = 0;
+        $id_val = '';
+        $id_patient = '';
+        $order_patient = '';
+        $ct = 1;
+        foreach ($labresults as $labresult) :
+            $name_patient_first = $labresult[patient_name];
+            if ($order_patient != $labresult[procedure_order_id]) {
+                $id_patient = $labresult[patient_id];
+                if ($id_patient != $id_val && $id_val != '') {
+                    $name_patient = $labresult[patient_name];
+                    $val = 1;
+                }
+            }
+            if ($val == 1 && $id_patient != '') {
+                $slno = 1;
+                echo '</table> <div id="footer"> <p class="page" align="center" id="page_' . $ct . '" ></p></div><div class="printbreak"></div>';
+                $ct++;
+                ?>
+                <div id="header">
+                    <table width="100%" cellpadding="0" cellspacing="0">
+                        <tr>
+                            <td style="text-align: center;" align='center'>
+                                <p style="font-size: x-large;">
+                                    ZH Health Care
+                                </p>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td id="labhead" class="labhead" style="text-align: center;" align='center'><?php echo xlt('Lab Result For'); ?> <b><i> <?php echo $name_patient; ?></i></b> </td>
+                        </tr>
+                    </table>
+                </div>
+                <table style="width:100%;" id="report_table_print">
+                    <thead>
+                        <tr>
+                            <th colspan="15">Lab Results</th>
+                        </tr>
+                        <tr>
+                            <th><?php echo xlt('Slno'); ?></th>
+                            <th colspan="5"><?php echo xlt('Order'); ?></th>     
+                            <th colspan="2"><?php echo xlt('Report'); ?></th>
+                            <th colspan="7"><?php echo xlt('Results and Recommendations'); ?></th>    
+                        </tr>
+                    </thead>
+                    <tr>
+                        <td width='4%'>&nbsp;</td>
+                        <td width='4%'><b><?php echo xlt('PID'); ?></b></td>
+                        <td width='4%'><b><?php echo xlt('Patient Name'); ?></b></td>
+                        <td width='5%'><b><?php echo xlt('Order Date'); ?></b></td>
+                        <td width='3%'><b><?php echo xlt('Ord.No.'); ?></b></td>
+                        <td><?php echo xlt('Status'); ?></td>
+                        <td title="<?php echo xlt('Time Collected'); ?>"><b><?php echo xlt('Time Collected'); ?></b></td>
+                        <td width='10%'><b><?php echo xlt('Status'); ?></b></td>
+                        <td><?php echo xlt('Name'); ?></td>
+                        <td width='3%'><b><?php echo xlt('Abn'); ?></b></td>
+                        <td width='4%'><b><?php echo xlt('Value'); ?></b></td>
+                        <td width='5%'><b><?php echo xlt('Units'); ?></b></td>
+                        <td width='6%'><b><?php echo xlt('Range'); ?></b></td>
+                        <td width='4%'><b><?php echo xlt('Status'); ?></b></td>
+                        <td title="<?php echo xlt('Comments'); ?>"><b><?php echo xlt('Comm.'); ?></b></td>
+                    </tr>
+                    <?php
+                }
+                $order_patient = $labresult[procedure_order_id];
+                $id_val = $id_patient;
+                ?>
+                <script>
+                <?php if ($count == 0) { ?>
+                        document.getElementById('labhead').innerHTML = 'Lab Result For ' + '<b><i><?php echo $name_patient_first; ?></i></b>';
+                <?php } ?>
+                </script>
+                <?php
+                $color = ($labresult['color'] <> "") ? $labresult['color'] : $color;
+                $totrows = $labresult['totalRows'];
+                if ($labresult[order_title] == "" && $labresult[procedure_name] == "")
+                    continue;
+                $patient_instructions = $labresult[patient_instructions];
+                if ($labresult[order_title] != '' && ($main_grp != $labresult[order_title] || $code_suffix != $labresult[code_suffix] || $labresult[order_id])) {
+                    ?>
+                    <tr>
+                        <td> <?php echo $slno; ?> </td>
+                        <td>
+                            <?php
+                            echo $this->escapeHtml($labresult[patient_id]);
+                            if ($this->escapeHtml($labresult[patient_id]) != '') {
+                                $slno++;
+                            }
+                            if ($labresult[patient_id] && $patient_instructions) {
+                                ?>
+                                <a href="javascript:void(0)" class="personPopupTrigger" rel="<?php echo str_replace("\n", "", $patient_instructions); ?>"><img src=<?php echo $this->basePath() ?>/css/icons/comments.png title=<?php echo xlt('Internal Comments'); ?> >
+                                    <?php
+                                }
+                                ?>
+                                                                                                                                                           </td>
+                                <td><?php echo $this->escapeHtml($labresult[patient_name]); ?>
+                                <td><?php echo $this->escapeHtml($labresult[date_ordered]); ?></td>
+                                <td><?php echo $this->escapeHtml($labresult[order_id]); ?></td>
+                                <td nowrap=nowrap><?php echo $this->escapeHtml($labresult[order_status]); ?></td>
+                                <td title="<?php echo $this->escapeHtml($labresult[date_collected]); ?>" nowrap=nowrap>
+                                    <?php
+                                    echo $this->escapeHtml($labresult[date_collected]);
+                                    ?>
+                                </td>
+                                <td><?php echo $this->escapeHtml($labresult[report_status]); ?></td>
+                                <td colspan="7" title="<?php echo $this->escapeHtml($labresult[order_title]); ?>" nowrap=nowrap><b><?php echo $this->escapeHtml($labresult[order_title]); ?></b></td>
+                                <?php
+                                if (($labresult['editor'] == 1) AND ($labresult['editor'] != 0)) {
+                                    $check = 1;
+                                }
+                                ?>
+                                <td style="display:none;border-style:dotted;border-width:0 1px 1px 0;border-color:#c0c0c0"   width='10%'>  <?php echo $this->escapeHtml($labresult[order_id]); ?> </td>
+                    </tr>
+                    <?php
+                }
+                if ($labresult[profile_title] && $profile_grp != $labresult[profile_title]) {
+                    ?>
+                    <tr>
+                        <td>&nbsp;</td>
+                        <td>&nbsp;</td>
+                        <td>&nbsp;</td>	
+                        <td>&nbsp;</td>
+                        <td>&nbsp;</td>
+                        <td nowrap=nowrap>&nbsp;</td>
+                        <td nowrap=nowrap>&nbsp;</td>
+                        <td>&nbsp;</td>
+                        <td colspan="7" nowrap=nowrap>&nbsp;&nbsp;&nbsp;<b><?php echo $this->escapeHtml($labresult[profile_title]); ?></b></td>
+
+                        <?php
+                        if (($labresult['editor'] == 1) AND ($labresult['editor'] != 0)) {
+                            $check = 1;
+                        }
+                        ?>
+                        <td style="display:none;border-style:dotted;border-width:0 1px 1px 0;border-color:#c0c0c0"   width='10%'>  <?php echo $this->escapeHtml($labresult[order_id]); ?> </td>
+                    </tr>
+                    <?php
+                }
+                if ($labresult[result] == 'DNR') {
+                    $profile_grp = $labresult[profile_title];
+                    $main_grp = $labresult[order_title];
+                    $code_suffix = $labresult[code_suffix];
+                    continue;
+                }
+                ?>
+                <tr  id="order-<?php echo $labresult[procedure_order_id] . "-" . $labresult[procedure_order_seq] . "-" . $labresult[procedure_name]; ?>">
+                    <td style="text-align: center"><?php echo $labresult[order_title] == NULL ? $slno : '&nbsp;'; ?></td>
+                    <td>
+                        <?php
+                        if ($labresult[order_title] == NULL) {
+                            echo $this->escapeHtml($labresult[patient_id]);
+                            if ($this->escapeHtml($labresult[patient_id]) != '') {
+                                $slno++;
+                            }
+                            if ($labresult[patient_id] && $patient_instructions) {
+                                ?>
+                                <a href="#" class="personPopupTrigger" rel="<?php echo $this->escapeHtml($patient_instructions); ?>"><img src=<?php echo $this->basePath() ?>/css/icons/comments.png title=<?php echo xlt('Internal Comments'); ?> >
+                                    <?php
+                                }
+                            } else
+                                echo '&nbsp;';
+                            ?>
+                                                                                                                                  </td>
+                            <td><?php echo $labresult[order_title] == NULL ? $this->escapeHtml($labresult[patient_name]) : '&nbsp;'; ?></td>
+                            <td><?php echo $labresult[order_title] == NULL ? $this->escapeHtml($labresult[date_ordered]) : '&nbsp;'; ?></td>
+                            <td><?php echo $labresult[order_title] == NULL ? $this->escapeHtml($labresult[order_id]) : '&nbsp;'; ?></td>
+                            <td nowrap=nowrap><?php echo $labresult[order_title] == NULL ? $this->escapeHtml($labresult[order_status]) : '&nbsp;'; ?></td>
+                            <td nowrap=nowrap><?php echo $labresult[order_title] == NULL ? $this->escapeHtml($labresult[date_collected]) : '&nbsp;'; ?></td>
+                            <td><?php echo $labresult[order_title] == NULL ? $this->escapeHtml($labresult[report_status]) : '&nbsp;'; ?></td>
+                            <td nowrap=nowrap>
+                                <?php
+                                if ($labresult[order_title] == NULL) {
+                                    ?>
+                                    <b><?php echo $this->escapeHtml($labresult[result_text]); ?></b>
+                                    <?php
+                                } else {
+                                    ?>
+                                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<?php echo $this->escapeHtml($labresult[result_text]); ?>
+                                    <?php
+                                }
+                                ?>
+                            </td>
+                            <?php
+                            $icclas = $title = '';
+                            if ($labresult[abnormal] == "H" || $labresult[abnormal] == "high") {
+                                $title = xlt('HIGH');
+                            } elseif ($labresult[abnormal] == "HH") {
+                                $title = xlt('VERY HIGH');
+                            } elseif ($labresult[abnormal] == "L" || $labresult[abnormal] == "low") {
+                                $title = xlt('LOW');
+                            } elseif ($labresult[abnormal] == "LL") {
+                                $title = xlt('VERY LOW');
+                            } elseif ($labresult[abnormal] == "N" || $labresult[abnormal] == "no") {
+                                $title = xlt('NORMAL');
+                            } elseif ($labresult[abnormal] == "A" || $labresult[abnormal] == "yes") {
+                                $title = xlt('ABNORMAL');
+                            } else
+                                $title = $labresult[abnormal];
+                            $res_units = \Application\Plugin\CommonPlugin::getDropdownValAsText("proc_unit", $labresult[units]);
+                            ?>
+                            <td title="<?php echo $title; ?>"><?php echo $title; ?></td>
+                            <td title="<?php echo $labresult[result]; ?>"><?php echo $labresult[result]; ?></td>
+                            <td title="<?php echo $this->escapeHtml($labresult[units]); ?>"><?php echo $this->escapeHtml($labresult[units]); ?></td>
+                            <td title="<?php echo $this->escapeHtml($labresult[range]); ?>"><?php echo strip_tags($labresult[range]); ?> </td>
+                            <td>
+                                <?php
+                                $resStat = '';
+                                if ($labresult[result_status] == 'F')
+                                    $resStat = xlt('Final');
+                                elseif ($labresult[result_status] == 'P')
+                                    $resStat = xlt('Preliminary');
+                                elseif ($labresult[result_status] == 'I')
+                                    $resStat = xlt('Pending');
+                                elseif ($labresult[result_status] == 'C')
+                                    $resStat = xlt('Correction');
+                                elseif ($labresult[result_status] == 'X')
+                                    $resStat = xlt('Cancelled');
+                                else
+                                    $resStat = ucwords($labresult[result_status]);
+                                if (!$resStat) {
+                                    $resStat = "Pending";
+                                }
+                                echo $resStat;
+                                ?>
+                            </td>
+                            <td align="center" <?php
+                            if (trim($labresult[comments])) {
+                                echo 'style="border-bottom:none;";';
+                            }
+                            ?> >
+                                &nbsp;
+                            </td>
+                </tr>
+                <?php
+                if (trim($labresult[comments])) {
+                    ?>
+                    <tr id="full_comments_<?php echo $i; ?>" >
+                        <td colspan="6" >
+                        </td>
+                        <td colspan="9" style="border-top:none;" >
+                            <div>
+                                <div class="text-content short-text">
+                                    <?php
+                                    $res_com = explode("*##*", $labresult[comments]);
+                                    if (!empty($res_com)) {
+                                        foreach ($res_com as $res):
+                                            echo "<pre>" . str_replace("\\r\\n", "<br>", $res) . "</pre>";
+                                        endforeach;
+                                    }else {
+                                        echo "<pre>" . str_replace("\\r\\n", "<br>", $labresult[comments]) . "</pre>";
+                                    }
+                                    ?>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>        
+                    <?php
+                }
+                if ($labresult[result_facility]) {
+                    $facilitys = explode("#*#", $labresult[result_facility]);
+                    if (!empty($facilitys)) {
+                        foreach ($facilitys as $res):
+                            $facility = explode("*#*", $res);
+                            $perform_lab = $facility[0];
+                            break;
+                        endforeach;
+                    }else {
+                        $perform_lab = $labresult[result_facility];
+                    }
+                    ?>
+                    <tr>
+                        <td>&nbsp;</td>
+                        <td colspan="14" class="tdfont childtd" >
+                    <?php echo xlt('PERFORMING LABORATORY') . ' : ' . $perform_lab; ?>
+                        </td>
+                    </tr>
+                    <?php
+                }
+                $i++;
+                $profile_grp = $labresult[profile_title];
+                $main_grp = $labresult[order_title];
+                $code_suffix = $labresult[code_suffix];
+                $count++;
+                $val = 0;
+            endforeach;
+            ?>
+            <tfoot>
+            <br>
+            <tr style="width:100%;">
+                <td colspan="15">&nbsp;</td>
+            </tr>
+            </tfoot>
+        </table>
+        <div id="footer" style=""> 
+            <p class="page" align='center'  id="page_<?php echo $ct; ?>" ></p> 
+        </div>
+        <!-- Result listing ends  here------------------------------------->
+</body> 
+<script>
+    function disPagenum() {
+        var pages = document.getElementsByClassName("page").length;
+        for (var k = 1; k <= pages; k++) {
+            document.getElementById("page_" + k).innerHTML = "Page " + k + " of  " + pages;
+        }
+        window.print();
+    }
+</script>  

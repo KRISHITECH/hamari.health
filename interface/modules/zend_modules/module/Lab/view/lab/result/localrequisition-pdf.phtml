@@ -1,0 +1,212 @@
+<?php
+/* +-----------------------------------------------------------------------------+
+ *    OpenEMR - Open Source Electronic Medical Record
+ *    Copyright (C) 2013 Z&H Consultancy Services Private Limited <sam@zhservices.com>
+ *
+ *    This program is free software: you can redistribute it and/or modify
+ *    it under the terms of the GNU Affero General Public License as
+ *    published by the Free Software Foundation, either version 3 of the
+ *    License, or (at your option) any later version.
+ *
+ *    This program is distributed in the hope that it will be useful,
+ *    but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *    GNU Affero General Public License for more details.
+ *
+ *    You should have received a copy of the GNU Affero General Public License
+ *    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *    @author  Sanal Jacob <sanalj@zhservices.com>
+ * +------------------------------------------------------------------------------+
+ */
+?>
+<style type="text/css">
+    .labHeader{font-size: 60px;float: right;text-align: right;text-height: max-size}
+    /*  .barcode{
+        background-image: url(<?php echo $img_name; ?>);
+        background : no-repeat center center;
+        padding: 5px 5px;
+        height: 30px;
+      }  */
+    table { 
+        font-family: times;
+        font-size: 10px;    
+    }
+    table.local { 
+        font-family: times;
+        font-size: 10px;    
+    }
+    table.footerTable { 
+        border-style: dashed;
+        border-width: 1px;
+        border-color: #CACACA;
+    }
+    td.borderOk{  
+        border-style: solid;
+        border-width: 1px;
+        border-color: #252525;
+        padding-left: 10px;
+        padding-top: 10px;
+        padding-bottom: 10px;
+        border-collapse: collapse;
+        overflow: hidden;
+    }
+    td.borderO{  
+        border-style: solid;
+        border-width: 1px;
+        border-color: #252525;
+        border-collapse: collapse;
+        overflow: hidden;
+    }
+    td.borderFade{  
+        border-style: solid;
+        border-width: 1px;
+        border-color: #CACACA;
+        padding-left: 10px;
+        padding-top: 10px;
+        padding-bottom: 10px;
+    }
+    td.tdHead{
+        font-weight: bold;
+        padding-top: 10px;
+    }
+    td.footTd{
+        border-style: dashed;
+        border-width: 1px;
+        border-color: #CACACA;
+        height: 20px;
+    }
+    table.print-friendly tr td, table.print-friendly tr th {
+        page-break-inside:avoid; 
+        page-break-after:auto;
+    }   
+    @page { 
+        margin: 50px 50px 0px 50px;
+        counter-increment: page;   
+    }
+    #header { position: fixed; left: 0px; top: -160px; right: 0px; height: 100px; text-align: center; background-color: white }
+    #footer { position: fixed; left: 0px; bottom: 30px; right: 0px; height: 50px; background-color: white; }
+    #content { padding: 0px; margin: 0px}
+</style>
+<body onload="javascript:disPagenum();" >
+    <table border="0" style="width: 100%"  cellpadding="2" cellspacing="0" class="local">
+        <tr>
+            <td style="width: 50%;">
+                <div id="barcode" class="barcode"></div>
+            </td>
+            <td style="width: 50%;"><div class="labHeader"><?php echo $orderDetails['name']; ?> </div></td>
+        </tr>
+        <tr>
+            <td class="borderOk" style="width: 50%;">
+                <?php
+                global $siteId;
+                echo $siteId . ' # ' . $orderDetails['procedure_order_id'];
+                ?><br /><br />                
+            </td>
+            <td class="borderOk" style="width: 50%;">
+                <strong><u><?php echo 'Patient Information'; ?></u></strong><br /><br />
+                <?php echo $orderDetails['pname']; ?><br />
+                <?php echo $orderDetails['street']; ?><br />
+                <?php echo $orderDetails['city']; ?><br />
+                <?php echo $orderDetails['postal_code']; ?><br /> 
+            </td>
+        </tr> 
+        <tr>
+            <td class="borderOk" style="width: 50%;">
+                <?php echo xlt('Collection Date & Time'); ?> :   <?php echo $orderDetails['date_collected']; ?><br />
+                <?php echo xlt('Lab Reference Id'); ?> : <?php echo $siteId . ' - ' . $orderDetails['procedure_order_id']; ?>
+            </td>
+            <td class="borderOk" style="width: 50%;">
+                <?php echo xlt('Patient Id'); ?> : <?php echo $orderDetails['patient_id']; ?><br />
+                <?php echo xlt('Date Of Birth'); ?> : <?php echo $orderDetails['DOB']; ?><br />
+                <?php echo xlt('Sex'); ?> : <?php echo $orderDetails['sex']; ?><br />
+            </td>
+        </tr>
+        <tr>
+            <td class="borderOk" style="width: 50%;">
+                <?php echo xlt('Ref Physician Provider ID'); ?>: <?php echo $orderDetails['uname']; ?><br>
+                <?php echo xlt('NPI'); ?> : <?php echo $orderDetails['unpi']; ?>
+            </td>
+            <td class="borderOk" style="width: 50%;">
+                <table style="width: 100%;">
+                    <tr>
+                        <td><?php echo xlt('Responsible Party'); ?> : <br></td>
+                        <td></td>
+                        <td><?php echo xlt('Bill Type'); ?> :<br></td>
+                        <td>
+                            <?php
+                            $billType = ($orderDetails['billto'] == 'T') ? 'Insurance' :
+                                    (($orderDetails['billto'] == 'P') ? 'Patiient' :
+                                            (($orderDetails['billto'] == 'C') ? 'Client' :
+                                                    ' '));
+                            echo $billType;
+                            ?>
+                        </td>
+                    </tr>          
+                    <tr>
+                        <td></td>
+                        <td></td>
+                        <td><?php echo xlt('Relation'); ?> :<br></td>
+                        <td><?php echo $orderDetails['subscriber_relationship']; ?></td>
+                    </tr>
+                    <tr>
+                        <td><?php echo xlt('DOB'); ?> : <?php echo $orderDetails['subscriber_DOB']; ?><br></td>
+                        <td></td>
+                        <td><?php echo xlt('SEX'); ?> :<br></td>
+                        <td><?php echo $orderDetails['subscriber_sex']; ?></td>
+                    </tr>
+                </table>
+            </td>
+        </tr>  
+        <tr>
+            <td class="borderOk" colspan="2"><?php echo xlt('Reporting Comments'); ?> : <?php echo $orderDetails['return_comments']; ?></td>
+        </tr>
+        <tr>
+            <td class="borderOk" colspan="2"><?php echo xlt('Internal Comments'); ?> : <?php echo $orderDetails['internal_comments']; ?></td>
+        </tr>
+            <?php if ($orderDetails['po_billto'] == 'T') { ?>
+            <tr>
+                <td class="borderOk" style="width: 50%;"><?php echo xlt('Insurance Address'); ?></td>
+                <td class="borderOk" style="width: 50%;"><?php
+                    echo $orderDetails['insname'] . '<br>';
+                    echo $orderDetails['line1'] . '<br>';
+                    echo $orderDetails['line2'] . '<br>';
+                    echo $orderDetails['inscity'] . '<br>';
+                    echo $orderDetails['insstate'] . '<br>';
+                    echo $orderDetails['zip'] . '<br>';
+                    echo $orderDetails['country'] . '<br>';
+                    ?>
+                </td>
+            </tr> 
+        <?php }
+        ?>
+    </table>
+    <br />
+    <div style="background-color: #000;text-align: center;font: small-caption  "><font style="color: white; "><?php echo xlt('Profiles/Tests'); ?></font> </div>
+    <table border="0" style="width: 100%;"  cellpadding="2" cellspacing="2" class="local">
+        <tr>
+            <td class="tdHead" style="width: 5%;"><?php echo xlt('Slno'); ?></td>   
+            <td class="tdHead" style="width: 10%;"><?php echo xlt('Proc.Code'); ?></td>
+            <td class="tdHead" style="width: 40%;"><?php echo xlt('Procedure Name'); ?></td>    
+            <td class="tdHead" style="width: 20%;"><?php echo xlt('Diagnosis'); ?></td>
+            <td class="tdHead" style="width: 25%;"><?php echo xlt('Patient Instructions'); ?></td>
+        </tr>
+        <?php
+        $i = 0;
+        foreach ($tests as $test) {
+            $i++;
+            ?>
+            <tr>
+                <td><?php echo $i; ?></td>
+                <td><?php echo $test['procedure_code']; ?></td>
+                <td><?php echo $test['procedure_name']; ?></td>     
+                <td><?php echo $test['diagnoses']; ?></td>
+                <td><?php echo $test['patient_instructions']; ?></td>
+            </tr>
+<?php } ?>       
+    </table>  
+</body>
+<script>
+    function disPagenum() {
+        window.print();
+    }
+</script> 

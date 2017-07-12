@@ -1,0 +1,1090 @@
+<?php
+/* +-----------------------------------------------------------------------------+
+ *    OpenEMR - Open Source Electronic Medical Record
+ *    Copyright (C) 2013 Z&H Consultancy Services Private Limited <sam@zhservices.com>
+ *
+ *    This program is free software: you can redistribute it and/or modify
+ *    it under the terms of the GNU Affero General Public License as
+ *    published by the Free Software Foundation, either version 3 of the
+ *    License, or (at your option) any later version.
+ *
+ *    This program is distributed in the hope that it will be useful,
+ *    but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *    GNU Affero General Public License for more details.
+ *
+ *    You should have received a copy of the GNU Affero General Public License
+ *    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *    @author  Sanal Jacob <sanalj@zhservices.com>
+ * +------------------------------------------------------------------------------+
+ */
+$form = $this->form;
+$form->setAttribute('action', $this->url('lab', array('action' => 'savedata')));
+$form->prepare();
+global $pid;
+echo $this->form()->openTag($form);
+echo $this->formRow($form->get('hiddensubmit'));
+echo $this->formRow($form->get('patient_id'));
+echo $this->formRow($form->get('encounter_id'));
+echo $this->formRow($form->get('procedurecount[0][]'));
+$name = \Lab\Model\ResultTable::getPatientName($pid);
+echo $this->headScript()->prependFile($this->basePath() . '/js/lab/lab.js');
+echo $this->headScript()->prependFile($this->basePath() . '/js/lab/labOrder.js');
+echo $this->headScript()->prependFile($this->basePath() . '/js/lab/procProviders.js');
+echo $this->headLink()->prependStylesheet($this->basePath() . '/css/labOrder.css');
+?>
+<style>
+    /* style for ajax_div_diagnosis */
+    #ajax_div_diagnosis {
+        position: absolute;
+        z-index:10;
+        /*
+        left: 20px;
+        top: 300px;
+        */
+        background-color: #FBFDD0;
+        border: 1px solid #ccc;
+        padding: 10px;
+    }
+    .hid_div{
+        position: absolute;
+        left: 360px;
+        top: 220px;
+        background-color: #FFFFFF;
+        border-width:1px;
+        padding: 5px;
+        border-style: solid;
+        min-height:178px;
+        border-color:#CCCCCC;
+        border-radius: 1%;
+        box-shadow: 5px 6px #e0e0eb;
+    }
+    .centerdiv{
+        height : 355px; 
+        position:absolute;
+        left: 40%;
+        top: 50%;
+        margin-left: -50px;
+        margin-top: -8%;      
+        overflow-y: auto;
+    }
+    /*    table td{
+            border-style:none !important;
+        }*/
+    .hid_div td{
+        border-style:none !important;
+    }
+</style>
+<script>
+    $(document).ready(function() {
+        $("#primary_medicare_data").val('<?php echo $this->primary_medicare_data; ?>'); // primary medicare data
+        $(".datetimeclass").datetimepicker({
+            showSecond: true,
+            dateFormat: "yy-mm-dd",
+            timeFormat: "hh:mm:ss",
+            showOn: 'button',
+            buttonImage: '<?php echo $this->basePath(); ?>/css/icons/calendar.gif',
+            buttonImageOnly: true,
+        });
+        $(".datetimeclass").on('change', function() {
+            var x = $(this).val();
+            if (!(x.match(/(\d{4})\-(0[1-9]|1[0-2])\-(0[1-9]|1[0-9]|2[0-9]|3[0-1])\s\d{2}:\d{2}:\d{2}/))) {
+                alert("Invalid Date Format");
+                $(this).val("");
+                $(this).attr('required', 'required');
+            }
+        });
+        // Show or hide labcorp specific fields
+        if ($("#lab_id_1_1 option:selected").text().toLowerCase() == 'labcorp') {
+            $("#CORcaption_1_1").css('display', 'table-cell');
+            $("#CORtd_1_1").css('display', 'table-cell');
+            $("#CourtesyCopycaption_1_1").css('display', 'table-cell');
+            $("#CourtesyCopytd_1_1").css('display', 'table-cell');
+            $("#addSpecimen_1_1").show();
+            $("#addSpecimen").css('display', 'inline-block');
+            $("#ABNcaption_1_1").css('display', 'table-cell');
+            $("#ABNtd_1_1").css('display', 'table-cell');
+            $("#specimencollectedcaption_1_1").css('display', 'block');
+            $("#specimencollectedtd_1_1").css('display', 'block');
+            $("#billtocaption_1_1").css('display', 'block');
+            $("#billtotd_1_1").css('display', 'block');
+        }
+    });
+    function dispPopUp(id) {
+        var order_num;
+        if (id.match('CourtesyCopy_'))
+            order_num = id.split('CourtesyCopy_');
+        else
+            order_num = id.split('viewButton_');
+        var order = order_num[1].split('_');
+        if ($("#" + id).is(':checked') || id.match('viewButton_')) {
+            $("#viewButton_" + order[0] + "_1").show();
+            $("#hid_div_" + order[0] + "_1").show();
+        }
+        else {
+            $("#viewButton_" + order[0] + "_1").hide();
+            $("#hid_div_" + order[0] + "_1").hide();
+            $("#hid_div_" + order[0] + "_1 input").remove();
+            $("#hid_div_" + order[0] + "_1 label").remove();
+            $("#hiddenA_" + order[0] + "_1").val("");
+            $("#hiddenF_" + order[0] + "_1").val("");
+            $("#hiddenP_" + order[0] + "_1").val("");
+        }
+
+    }
+    function closedlg() {
+        $('.hid_div').hide();
+    }
+    var cnt = 0;
+    function addFields(id) {
+        var select = id.split('ccselect_');
+        var select_id = select[1].split('_');
+        var id1 = select_id[0] - 1;
+        var option = $("#" + id + " option:selected").val();
+        if (option == "account") {
+            hdn = '<tr ><input id="hiddenA_' + select_id[0] + '_1" type="hidden" value="A" name="typeA[' + id1 + '][]"></tr>';
+            tr = hdn + '<tr id="acc_' + select_id[0] + '_1"><td><label>Account No:</label></td><td><input type="hidden" id="accname_' + select_id[0] + '_1" name="accname[' + id1 + '][]" value=""><input type="text" id="accno_' + select_id[0] + '_1" name="accno[' + id1 + '][]"><td><input type="button" name="deleterow" id="acc_rem_' + select_id[0] + '_1" value="Remove" onclick="removeIt(this.id);"/></td></tr>';
+            $("#tab_" + select_id[0] + "_1").append(tr);
+        } else if (option == "fax") {
+            hdn = '<tr><input id="hiddenF_' + select_id[0] + '_1" type="hidden" value="F" name="typeF[' + id1 + '][]"></tr>';
+            tr = hdn + '<tr id="fax_' + select_id[0] + '_1"><td><label>Fax No:</label></td><td><input type="text" id="faxno_' + select_id[0] + '_1" name="faxno[' + id1 + '][]"><td><label>Fax Name</label></td><td><input type="text" id="faxname_' + select_id[0] + '_1" name="faxname[' + id1 + '][]"></td><td><input type="button" name="deleterow" id="fax_rem_' + select_id[0] + '_1" value="Remove" onclick="removeIt(this.id);"/></td></tr>';
+            $("#tab_" + select_id[0] + "_1").append(tr);
+        }
+        else if (option == "patient") {
+            if (cnt == 0) {
+                cnt = cnt + 1;
+                hdn = '<tr><input id="hiddenP_' + select_id[0] + '_1" type="hidden" value="P" name="typeP[' + id1 + '][]"></tr>';
+                tr = hdn + '<tr id="pat_' + select_id[0] + '_1"><td><label>Patient Name:</label></td><td><input type="text" id="patname_' + select_id[0] + '_1" name="patname[' + id1 + '][]" value="<?php echo $name; ?>" disabled></td><td><input type="button" name="deleterow" id="pat_rem_' + select_id[0] + '_1" value="Remove" onclick="removeIt(this.id);"/></td></tr>';
+                $("#tab_" + select_id[0] + "_1").append(tr);
+            }
+        }
+    }
+    function addNew(id) {
+        var id_split = id.split("_");
+        var id1 = id_split[2] - 1;
+        var id2 = Number(id_split[3]) + 1;
+        var id3 = Number(id_split[3]) + 1;
+        $("#" + id_split[0] + "_rem_" + id_split[2] + "_" + id_split[3]).show();
+        $("#" + id).hide();
+        $("#" + id).parent('td').hide();
+        if (id_split[0] == "acc") {
+            // tr = '<tr id="acc_'+id_split[2]+'_'+id3+'"><td><label>Account No:</label></td><td><input type="text" id="accno_'+id_split[2]+'_'+id3+'" name="accno['+id1+'][]"><td><label>Account Name</label></td><td><input type="text" id="accname_'+id_split[2]+'_'+id3+'" name="accname['+id1+'][]"></td><td><input type="button" name="removerow" id="acc_rem_'+id_split[2]+'_'+id3+'" value="Remove" onclick="removeIt(this.id);"/></td></tr>';
+            tr = '<tr id="acc_' + id_split[2] + '_' + id3 + '"><td><label>Account No:</label></td><td><input type="hidden" id="accname_' + select_id[0] + '_1" name="accname[' + id1 + '][]" value=""<input type="text" id="accno_' + id_split[2] + '_' + id3 + '" name="accno[' + id1 + '][]"><td><input type="button" name="removerow" id="acc_rem_' + id_split[2] + '_' + id3 + '" value="Remove" onclick="removeIt(this.id);"/></td></tr>';
+            $("#tab_" + id_split[2] + "_1").append(tr);
+        }
+        else if (id_split[0] == "fax") {
+            tr = '<tr id="fax_' + id_split[2] + '_' + id3 + '"><td><label>Fax No:</label></td><td><input type="text" id="faxno_' + id_split[2] + '_' + id3 + '" name="faxno[' + id1 + '][]"><td><label>Fax Name</label></td><td><input type="text" id="faxname_' + id_split[2] + '_' + id3 + '" name="faxname[' + id1 + '][]"></td><td><input type="button" name="removerow" id="fax_rem_' + id_split[2] + '_' + id3 + '" value="Remove" onclick="removeIt(this.id);"/></td></tr>';
+            $("#tab_" + id_split[2] + "_1").append(tr);
+        }
+    }
+    function removeIt(id) {
+        var id_split = id.split("_");
+        if (id_split[0] == "acc") {
+            $("#acc_" + id_split[2] + "_" + id_split[3]).remove();
+        }
+        else if (id_split[0] == "fax") {
+            $("#fax_" + id_split[2] + "_" + id_split[3]).remove();
+        }
+        else if (id_split[0] == "pat") {
+            $("#pat_" + id_split[2] + "_" + id_split[3]).remove();
+        }
+    }
+    $(function() {
+        var sele = $('#lab_id_1_1 option:selected').text();
+        if (sele == 'Quest') {
+            checkLab('2|1', 'lab_id_1_1');
+        }
+    });
+    //Hide the div 'ajax_div_diagnosis' when clicks outside
+    $(document).click(function(event) {
+        var diag = $("#diagid").val();
+        var container = $("#" + diag);
+        if (!container.is(event.target)) {
+            if (document.getElementById('ajax_div_diagnosis') && document.getElementById('ajax_div_diagnosis').style.display != 'none')
+            {
+                document.getElementById('ajax_div_diagnosis').style.display = 'none';
+            }
+        }
+    });
+    /**
+     * Ajax function to call and set the result to 
+     * the div 'ajax_div_diagnosis'.
+     * 
+     */
+    function addajaxdiag(val, selectedCodeTypes, externalCodeSearch)
+    {
+        $.ajax({
+            type: "POST",
+            url: '<?php echo $GLOBALS['webroot'] ?>/interface/patient_file/summary/ajax_code.php',
+            dataType: "html",
+            async: true,
+            data: {
+                ajax_mode: 'addissue',
+                code_ajax: val ? val : '',
+                code_types: selectedCodeTypes,
+                external_code_search: externalCodeSearch
+            },
+            success: function(thedata) {
+                if ($("#loading")) {
+                    $("#loading").css("display", "none");
+                }
+                var diag = $("#diagid").val();
+                var pos = $("#" + diag).position();
+                var height = $("#" + diag).outerHeight();
+                $("#ajax_div_diagnosis").html(thedata);
+                $("#ajax_div_diagnosis").css({
+                    position: "absolute",
+                    top: pos.top + height + "px",
+                }).show('slow');
+            },
+            error: function() {
+                alert("error");
+            }
+        });
+        return;
+    }
+    /**
+     * Function to call the ajax for autosuggest w.r.t 
+     * checkboxes selected.
+     */
+    function searchCodeString()
+    {
+        var diag = $("#diagid").val();
+        var diagArr = diag.split("_");
+        var val = document.getElementById('form_diagnosis').value;
+        var selectedCodeTypes = "";
+        var selectedCount = 0;
+        if (document.getElementById('code_type_count')) {
+            var codeTypeCount = document.getElementById('code_type_count').value;
+            if (codeTypeCount > 1) {    // HAS MORE THAN ONE DIAGNOSIS CODE TYPE ACTIVATED    
+                for (var i = 1; i <= codeTypeCount; i++)
+                {
+                    if ($("#editor_" + diagArr[1]).find("#code_type" + i).prop("checked") == true) {
+                        if (selectedCount > 0) {
+                            selectedCodeTypes = selectedCodeTypes + ",";
+                        }
+                        selectedCount++;
+                        selectedCodeTypes = selectedCodeTypes + $("#editor_" + diagArr[1]).find("#code_type" + i).val();
+                    }
+                }
+            }
+            else { // ONLY ONE DIAGNOSIS CODE TYPE IS ACTIVATED          
+                selectedCodeTypes = $("#editor_" + diagArr[1]).find("#code_type1").val();
+            }
+        }
+        var cnt = val.indexOf(';');
+        var len = 0;
+
+        if (cnt != -1) {
+            arr = val.split(';');
+            len = arr.length;
+            val = arr[len - 1];
+
+            var currFormDiag = "";
+            for (var k = 0; k < (len - 1); k++) {
+                currFormDiag += arr[k] + ";";
+            }
+            document.getElementById('hid_form_diagnosis').value = currFormDiag;
+        }
+        else {
+            document.getElementById('hid_form_diagnosis').value = "";
+        }
+
+        if (val.length < 1) {
+            $('#ajax_div_diagnosis').hide();
+            if ($("#loading")) {
+                $("#loading").css("display", "none");
+            }
+            return false;
+        }
+
+        $('#ajax_div_diagnosis').hide();
+
+        if (selectedCodeTypes == "") {
+            return false;
+        }
+        var diag = $("#diagid").val();
+        var pos = $("#" + diag).position();
+        var height = $("#" + diag).outerHeight();
+        if ($("#loading")) {
+            $("#loading").css({
+                top: pos.top + height + "px",
+                display: 'block',
+            });
+        }
+        var externalCodeSearch = 0;
+        if ($("#editor_" + diagArr[1]).find("#advanced_code_search")) {
+            if ($("#editor_" + diagArr[1]).find("#advanced_code_search").prop("checked") == true) {
+                externalCodeSearch = 1;
+            }
+        }
+
+        addajaxdiag(val, selectedCodeTypes, externalCodeSearch);
+        return 1;
+    }
+    //Specially for chrome.
+    function PreventIt(evt)
+    {
+        evt = (evt) ? evt : window.event;
+        var charCode = (evt.which) ? evt.which : evt.keyCode;
+        if (charCode == 13)//tab key,enter key
+        {
+            if (evt.preventDefault)
+                evt.preventDefault();
+            if (evt.stopPropagation)
+                evt.stopPropagation();
+        }
+    }
+    /**
+     * Function to place values to the text box
+     * */
+    function PlaceValues(evt, Code, Name, Price, Units, Source)
+    {
+        evt = (evt) ? evt : window.event;
+        var charCode = (evt.which) ? evt.which : evt.keyCode;
+        if (charCode == 13)//enter key
+        {
+            PutTheValuesClick(Code, Name, Price, Units, Source);
+            PreventIt(evt);
+        }
+    }
+    /**
+     * Function to put the values to the textbox when click on it.
+     * (the function is called from ajax_code.php so why extra parameters are present.)
+     */
+    function PutTheValuesClick(Code, Name, Price, Units, Source, CodeType, ExternalCodeSearch, glblicdversion)
+    {
+        if (Source == 'addissue') {
+            document.getElementById('hid_form_diagnosis').value += CodeType + ':' + Code + ';';
+            document.getElementById('form_diagnosis').value = document.getElementById('hid_form_diagnosis').value;
+            var diag = $("#diagid").val();
+            document.getElementById(diag).value = document.getElementById('hid_form_diagnosis').value;
+            document.getElementById('form_diagnosis').focus();
+            document.getElementById('form_diagnosis').readonly = false;
+            Name = 'addissue';
+            //CODE FOR SAVING CODES , IF IT FINDS FROM EXTERNAL CODE DATABASE
+            if (ExternalCodeSearch == "1") {
+                saveExternalCodesToLocal(Code, CodeType);
+            }
+        }
+        document.getElementById('hidden_ajax_close_value').value = Name;
+    }
+    /**
+     * Function to call an ajax function that save the External codes to the local DB
+     * @param String Code
+     * @param String CodeType 
+     */
+    function saveExternalCodesToLocal(Code, CodeType) {
+        $.ajax({
+            type: "POST",
+            url: '<?php echo $GLOBALS['webroot'] ?>/interface/forms/fee_sheet/ajax_code.php',
+            dataType: "html",
+            data: {
+                ajax_mode: 'saveExternalCodes',
+                code: Code,
+                codeType: CodeType
+            },
+            success: function(thedata) {
+            },
+            error: function() {
+                alert('Error in Saving External Code data');
+            }
+        });
+        return;
+    }
+    /**
+     * Function to display the specimen collection PopUp window
+     * @param String id
+     */
+    function addSpecimen(id) {
+        spec_id = id.split("addSpecimen_");
+        $("#hid_spec_" + spec_id[1]).show();
+    }
+    /**
+     * Function for multiple specimen in a single procedure
+     */
+    function addSpecimenCollectSection(id)
+    {
+        var ids = id.split('addSpecimenCollect_');
+        var id = ids[1].split('_');
+        var acc_num = parseInt(id[0]) - 1;
+        var inc = parseInt(id[1]) - 1;
+        var div = '<div style="text-align: center;margin-left: 35%;float: left; "><?php echo xlt('Specimen Collection'); ?></div><br><br><div style="float:left;margin-left: 8%;">Specimen Label:</div><div style="margin-left:40%;"><input type="text" name="spec_name[' + acc_num + '][' + inc + '][]" value="" style="width:164px;" /></div><br><br>' +
+                '<div style="float:left;margin-left: 8%;"><?php echo xlt('Specimen Site'); ?>:</div><div style="margin-left:40%;"><select name="spselect[' + acc_num + '][' + inc + '][]" style="width:171px;">'
+                <?php foreach ($specimen_source as $row): ?>
+                            + '<option value="<?php echo $row['specimen_term'] . '@|@' . $row['specimen_descriptor']; ?>"><?php echo $row["specimen_term"]; ?></option>'
+                <?php endforeach; ?>
+                        + '</select></div><br><br>' +
+                                '<div style="float:left;margin-left: 8%;"><?php echo xlt('Specimen Descriptor 1'); ?>:</div><div style="margin-left:40%;"><select name="spselect1[' + acc_num + '][' + inc + '][]" style="width:171px;">'
+                <?php foreach ($specimen_source_des as $row): ?>
+                            + '<option value="<?php echo $row['specimen_term'] . '~~' . $row['specimen_descriptor']; ?>"><?php echo $row["specimen_term"]; ?></option>'
+                <?php endforeach; ?>
+                        + '</select></div><br><br>' +
+                                '<div style="float:left;margin-left: 8%;"><?php echo xlt('Specimen Descriptor 2'); ?>:</div><div style="margin-left:40%;"><select name="spselect2[' + acc_num + '][' + inc + '][]" style="width:171px;">'
+                <?php foreach ($specimen_source_des as $row): ?>
+                            + '<option value="<?php echo $row['specimen_term'] . '~~' . $row['specimen_descriptor']; ?>"><?php echo $row["specimen_term"]; ?></option>'
+                <?php endforeach; ?>
+                        + '</select></div><br><br>' +
+                                '<div style="float:left;margin-left: 8%;"><?php echo xlt('Specimen Descriptor 3'); ?>:</div><div style="margin-left:40%;"><select name="spselect3[' + acc_num + '][' + inc + '][]" style="width:171px;">'
+                <?php foreach ($specimen_source_des as $row): ?>
+                            + '<option value="<?php echo $row['specimen_term'] . '~~' . $row['specimen_descriptor']; ?>"><?php echo $row["specimen_term"]; ?></option>'
+                <?php endforeach; ?>
+                + '</select></div><br><br>' +
+                        '<div style="float:left;margin-left: 8%;"><?php echo xlt('Specimen Description'); ?>:</div><div style="margin-left:40%;"><input type="text" name="spec_desc[' + acc_num + '][' + inc + '][]" value="" style="width:164px;" /></div><br><br></div>';
+                $("#hid_spec_" + ids[1]).append(div);
+    }
+</script>
+<?php if ($this->message == 'N') { ?>
+    <div class="easyui-accordion" style="width:auto;height:550px;">
+        <div  title="<?php echo xlt('Procedure Order'); ?>" style="overflow:auto;padding:10px;">
+            <div id="dlg" class="easyui-dialog" title="<?php echo xlt('Message'); ?>" data-options="iconCls:'icon-save'" style="width:400px;height:200px;padding:10px">
+                <div style="margin: 50px; font-size: 14px;"><?php echo xlt('Please select a patient and encounter'); ?></div>
+            </div>
+        </div>
+    </div>
+<?php } else { ?>
+    <!--a href="#"  plain="true" onclick="newOrder();">
+        <img  class="easyui-linkbutton" iconCls="icon-multiple" src=<?php echo $this->basePath() . '/css/icons/multiple.png'; ?> title=<?php echo xlt('Order'); ?> border=0 />
+    <?php echo xlt('New Order'); ?>
+    </a-->
+    <div style="margin-bottom: 2px;"></div>
+    <div style="background: linear-gradient(to bottom, #EFF5FF 0px, #E0ECFF 100%) repeat-x scroll 0 0 transparent; padding: 5px; border:1px solid #95B8E7;">
+        <div >
+            <a href="javascript:void(0)"  onclick="saveFrm();" class="easyui-linkbutton" iconCls="icon-save" title=<?php echo xlt('Save'); ?>>
+    <?php echo xlt('Save'); ?>
+            </a>        
+            <a onclick="saveFrm('print');" class="easyui-linkbutton" iconCls="icon-save" title=<?php echo xlt('Save And Download Requisition'); ?>>
+                <?php echo xlt('Save And Download Requisition'); ?>
+            </a>        
+            <a href="javascript:void(0)" class="easyui-linkbutton"
+               data-options="iconCls:'icon-providers'"
+               onclick="$('#dlgProvider').dialog('open')"><?php echo xlt('Providers'); ?>
+            </a>     
+        </div>  
+    </div>
+    <div id="ajax_div_diagnosis" style="display:none;left: 470px;"></div>
+    <div id="loading" style="display:none;position:absolute;z-index:9999;left: 470px;" >
+        <img src='<?php echo $GLOBALS['webroot'] ?>/images/loading.gif' align='absbottom' border='0' alt='[?]' style='cursor:pointer'/>
+    </div>
+    <input type="hidden" name="print_check" id="print_check" value="" />
+    <input type="hidden" name="tot_order" id="tot_order" value="" />
+    <input type="hidden" name="code_type_count" id="code_type_count" value="<?php echo count($diagArr); ?>">                                      
+    <input type="hidden" name="hid_form_diagnosis" id="hid_form_diagnosis" value="<?php echo $diagnosis; ?>">
+    <input type='hidden' size='50' name='form_diagnosis' id='form_diagnosis'/>		                                        
+    <input type="hidden" name="hidden_ajax_close_value" id="hidden_ajax_close_value"> 
+    <input type="hidden" name="primary_medicare_data" id="primary_medicare_data">
+    <div style="margin-bottom: 2px;"></div>
+    <div id='accord' class="easyui-accordion" style="width:1234px;height:550px;overflow:auto">
+        <div id='main_1' title="<?php echo xlt('Procedure Order'); ?>" data-options="iconCls:'icon-single'" style="overflow:auto;padding:10px; width:auto;">
+            <div id="toolbar_1">
+                <span style="padding-left: 10px;" >
+                    <a href="javascript:void(0)" id='addButton_1'  plain="true" onclick="addRow(this.id);">
+                        <img  src=<?php echo $this->basePath() . '/css/icons/edit_add.png'; ?> title=<?php echo xlt('Add'); ?> border=0 />
+                        <?php echo xlt('Add Procedure'); ?>
+                    </a>
+                </span>
+                <span style="padding-left: 10px;" >
+                    <a href="#"  plain="true" onclick="newOrder();">
+                        <img  class="easyui-linkbutton" iconCls="icon-multiple" src=<?php echo $this->basePath() . '/css/icons/multiple.png'; ?> title=<?php echo xlt('Order'); ?> border=0 />
+                        <?php echo xlt('New Order'); ?>
+                    </a>
+                </span>
+            </div>
+            <div id='editor_1' style="text-align: left; padding-left:20px;">
+                <table id='tt_1' border='0' class="dv-table gridtable" style="width:98%;background:#fafafa;padding:1px;margin-top:5px;margin-bottom:15px;border:1px solid #95B8E7; box-shadow: 10px 10px 5px #E0E0EB;">
+                    <tr style="font-weight: bold">
+                        <td><?php echo xlt('Ordering Provider'); ?></td>
+                        <td><?php echo xlt('Sending To'); ?></td>
+                        <td><?php echo xlt('Order Date'); ?></td>
+                        <td id="internaltimecaption_1_1" style="display:none"><?php echo xlt('Internal Time Collected'); ?></td>
+                        <td><?php echo xlt('Internal Comments'); ?></td>
+                        <td id='specimencollectedcaption_1_1' style="display:none"><?php echo xlt('Specimen Collected'); ?></td>
+                        <td id='CORcaption_1_1' style="display:none"><?php echo xlt('COR'); ?></td>
+                        <td id='CourtesyCopycaption_1_1' style="display:none"><?php echo xlt('Courtesy Copy'); ?></td>
+                        <td id='ABNcaption_1_1' style="display:none"><?php echo xlt('ABN'); ?></td>
+                        <td>
+                            <div  id="hid_div_1_1" class="hid_div gridview2 centerdiv" style="display:none;" >
+                                <div><img style="margin-left:95%;" src=<?php echo $this->basePath() . '/css/icons/no.png'; ?> onclick="closedlg()"> </div>					  
+                                <table id="tab_1_1">
+                                    <tr>
+                                        <td><?php echo xlt('Choose From the List'); ?></td>
+                                        <td>
+                                            <select id="ccselect_1_1" name="ccselect[0][]" onchange="addFields(this.id)" >
+                                                <option value="" selected="selected"><?php echo xlt('Unassigned'); ?></option>
+                                                <option value="patient"><?php echo xlt('Patient'); ?></option>
+                                                <option value="account"><?php echo xlt('Account'); ?></option>
+                                                <option value="fax"><?php echo xlt('Fax'); ?></option>
+                                            </select>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </td>
+                        <td><?php echo xlt('Priority'); ?></td>
+                        <td><?php echo xlt('Status'); ?></td>
+                        <td id='billtocaption_1_1' style="display:none" valign='top'><?php echo xlt('Bill To'); ?></td>
+                    </tr>
+                    <tr>
+                    <input type="hidden" name="procedure_list" id="procedure_list" value="">
+                    <input type="hidden" name="diagid" id="diagid" value="">
+                    <td valign='top'><?php echo $this->formRow($form->get('provider[0][]')); ?></td>
+                    <td valign='top'><?php echo $this->formRow($form->get('lab_id[0][]')); ?></td>
+                    <td valign='top'>
+                    <?php echo $this->formRow($form->get('orderdate[0][]')); ?>
+                    </td>
+                    <td valign='top' id="internaltime_1_1" style="display:none">
+                        <?php //echo $this->formRow($form->get('timecollected[0][]')); ?>
+                    </td>
+                    <td  valign='top'><?php echo $this->formRow($form->get('internal_comments[0][]')); ?></td>
+                    <td valign='top' id='specimencollectedtd_1_1' style="display:none">
+                        <?php echo $this->formRadio($form->get('specimencollected[0][]'), 'prepend'); ?>
+                    </td>
+                    <td valign='top' id='CORtd_1_1' style="display:none; text-align: center">
+                        <input type="checkbox" name="COR[0][]" id="COR_1_1">
+                    </td>
+                    <td valign='top' id='CourtesyCopytd_1_1' style="display:none; text-align: center">
+                        <input type="checkbox" name="CourtesyCopy[0][]" onclick="dispPopUp(this.id);" id="CourtesyCopy_1_1">
+                        <span style="padding-left: 10px;" >
+                            <a href="#" id='viewButton_1_1'  style="height: 20px;display: none; text-align: center"  plain="true" onclick="dispPopUp(this.id)">
+                            <?php echo xlt('View'); ?>
+                            </a>
+                        </span>
+                    </td> 
+                    <td valign='top' id='ABNtd_1_1' style="display:none; text-align: center">
+                        <input type="checkbox" name="ABN[0][]" id="ABN_1_1">
+                    </td>
+                    <td valign='top'></td>
+                    <td valign='top'><?php echo $this->formRow($form->get('priority[0][]')); ?></td>
+                    <td valign='top'><?php echo $this->formRow($form->get('status[0][]')); ?></td>
+                    <td id='billtotd_1_1' style="display:none" valign='top'><?php echo $this->formRow($form->get('billto[0][]')); ?></td>
+                    </tr>
+                </table>
+
+                <table id='dgord_1' border='0'  style="width:98%;background:#fafafa;padding:5px;margin-top:5px;margin-bottom:15px;border:1px solid #95B8E7; box-shadow: 10px 10px 5px #E0E0EB;">
+                    <tr>
+                        <td>
+                            <table class="dv-table gridtable" style="width:100%;background:#fafafa;padding:5px;">
+                                <tr  style="font-weight: bold">
+                                    <td width='35%' valign='top'><?php echo xlt('Patient Instructions'); ?></td>
+                                    <td width='25%' valign='top'><?php echo xlt('Diagnosis'); ?>                                                                        
+                                    <?php
+                                    if (count($diagArr) > 1) { //IF MORE THAN ONE DIAGNOSIS CODE TYPE IS ACTIVATED		
+                                        $cnt = 0;
+                                        foreach ($diagArr as $key => $value) {
+                                            $cnt++;
+                                            $chk = "";
+                                            if ((count($userSelectedCodeTypes) > 0) && ($userSelectedCodeTypes[0] <> "")) {
+                                                if (in_array($key, $userSelectedCodeTypes)) {
+                                                    $chk = "checked=\"checked\"";
+                                                }
+                                            } else if ($key == "ICD9") {
+                                                $chk = "checked=\"checked\"";
+                                            }
+                                            ?>                                   
+                                                &nbsp;<input type='checkbox' name='code_type[]' id='code_type<?php echo $cnt; ?>' 
+                                                             value='<?php echo $key; ?>' <?php echo $chk; ?> onclick = "searchCodeString()"/>
+                                                <span <?php echo $class; ?>><?php echo $value['label']; ?></span> 
+                                                <?php
+                                            }
+                                        } else { // IF ONLY ONE DIAGNOSIS CODE TYPE IS ACTIVATED
+                                            $diagCnt = 0;
+                                            foreach ($diagArr as $key => $value) {
+                                                $diagCnt++;
+                                                ?>
+                                                <input type='hidden' name='code_type' id='code_type<?php echo $diagCnt; ?>' value='<?php echo $key; ?>' />                               
+                                                <?php
+                                            }
+                                        }
+                                        ?></td>                                                                                                             
+                                    <td width='20%' valign='top'><?php echo xlt('Procedure'); ?></td>
+                                    <td align='center'><?php echo xlt('Action'); ?></td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td id="insTempl_1_1">
+                            <table id='cloneID_1_1' class="dv-table gridtable" style="width:100%;background:#fafafa;padding:5px;">
+                                <tr>
+                                    <td width='35%' valign='top'><?php echo $this->formRow($form->get('patient_instructions[0][]')); ?></td>
+                                    <td width='25%' valign='top'>
+                                        <span id="diagnosestemplate_1_1">
+                                        <?php echo $this->formRow($form->get('diagnoses[0][]')); ?>
+                                            <div class="autocomplete-suggestions" id="diagnodiv_1_1" style="display:none;z-index:99999;position:absolute;min-width:150px"></div>
+                                        </span>
+                                    </td>
+                                    <td width='20%' valign='top'>
+                                        <span id="proceduretemplate_1_1">
+                                            <?php echo $this->formRow($form->get('procedures[0][]')); ?>
+                                            <div class="autocomplete-suggestions" id="prodiv_1_1" style="display:none;z-index:99999;position:absolute;min-width:150px"></div>
+                                            <?php echo $this->formRow($form->get('procedure_code[0][]')); ?>
+                                            <?php echo $this->formRow($form->get('procedure_suffix[0][]')); ?>
+                                        </span>
+                                    </td>
+                                    <td valign='top' align='center'>
+                                        <span style="padding-left: 10px;" >
+                                            <a href="#" id='deleteButton_1_1'  style="height: 20px;"  plain="true" onclick="cancelItem(this.id)">
+                                                <img  class="easyui-linkbutton" iconCls="icon-cancel" src=<?php echo $this->basePath() . '/css/icons/cancel.png'; ?> title=<?php echo xlt('Cancel'); ?> border=0 />
+                                                <?php echo xlt('Cancel'); ?>
+                                            </a>
+                                        </span>
+                                        <span style="padding-left: 10px;" >
+                                            <a href="javascript:void(0)" id='addButton_1_1'  plain="true" onclick="addRow(this.id);">
+                                                <img  src=<?php echo $this->basePath() . '/css/icons/edit_add.png'; ?> title=<?php echo xlt('Add'); ?> border=0 />
+                                                <?php echo xlt('Add'); ?>
+                                            </a>
+                                        </span>
+                                        <span style="padding-left: 10px;" >
+                                            <a href="javascript:void(0)" id='addSpecimen_1_1' class="addSpecimen_1"  plain="true" onclick="addSpecimen(this.id);" style="display:none;" >
+                                                <img  src=<?php echo $this->basePath() . '/css/icons/add.png'; ?> title=<?php echo xlt('Add Specimen'); ?> border=0 />
+                                                <?php echo xlt('Specimen'); ?>
+                                            </a>                                            
+                                            <div  id="hid_spec_1_1" name="hid_spec[0][]" class="hid_div gridview2 centerdiv" style="display:none;width: 30%;" >
+                                                <div><img style="margin-left:95%;" src=<?php echo $this->basePath() . '/css/icons/no.png'; ?> onclick="closedlg()"> </div>					  
+                                                <div style="text-align: center;margin-left: 35%;float: left; ">Specimen Collection</div>
+                                                <span>
+                                                    <a href="javascript:void(0)" id='addSpecimenCollect_1_1'  plain="true" onclick="addSpecimenCollectSection(this.id)">
+                                                        <img  src="<?php echo $this->basePath() . '/css/icons/edit_add.png'; ?>" title="<?php echo xlt('Add'); ?>" border=0 />
+                                                        <?php echo xlt('Add'); ?>
+                                                    </a>
+                                                </span>
+                                                <br><br> 
+                                                <div style="text-align: left;">
+                                                    <div style="float:left;margin-left: 8%;"><?php echo xlt('Specimen Label'); ?>:</div><div style="margin-left:48%;"><input type="text" id="spec_name_1_1" name="spec_name[0][0][]" value="" style="width:164px;" /></div><br><br>
+                                                    <div style="float:left;margin-left: 8%;"><?php echo xlt('Specimen Site'); ?>:</div><div style="margin-left:48%;"><select id="spselect_1_1" name="spselect[0][0][]" style="width:171px;">
+                                                        <?php foreach ($specimen_source as $row): ?>
+                                                                <option value="<?php echo $row['specimen_term'] . "@|@" . $row['specimen_descriptor']; ?>"><?php echo $row['specimen_term']; ?></option>
+                                                        <?php endforeach; ?>
+                                                        </select></div><br><br>
+                                                    <div style="float:left;margin-left: 8%;"><?php echo xlt('Specimen Descriptor 1'); ?>:</div><div style="margin-left:48%;"><select id="spselect1_1_1" name="spselect1[0][0][]" style="width:171px;">
+                                                            <?php foreach ($specimen_source_des as $row): ?>
+                                                                <option value="<?php echo $row['specimen_term'] . "~~" . $row['specimen_descriptor']; ?>"><?php echo $row['specimen_term']; ?></option>
+                                                            <?php endforeach; ?>
+                                                        </select></div><br><br>
+                                                    <div style="float:left;margin-left: 8%;"><?php echo xlt('Specimen Descriptor'); ?> 2:</div><div style="margin-left:48%;"><select id="spselect2_1_1" name="spselect2[0][0][]" style="width:171px;">
+                                                            <?php foreach ($specimen_source_des as $row): ?>
+                                                                <option value="<?php echo $row['specimen_term'] . "~~" . $row['specimen_descriptor']; ?>"><?php echo $row['specimen_term']; ?></option>
+                                                            <?php endforeach; ?>
+                                                        </select></div><br><br>
+                                                    <div style="float:left;margin-left: 8%;"><?php echo xlt('Specimen Descriptor 3'); ?>:</div><div style="margin-left:48%;"><select id="spselect3_1_1" name="spselect3[0][0][]" style="width:171px;">
+                                                            <?php foreach ($specimen_source_des as $row): ?>
+                                                                <option value="<?php echo $row['specimen_term'] . "~~" . $row['specimen_descriptor']; ?>"><?php echo $row['specimen_term']; ?></option>
+                                                            <?php endforeach; ?>
+                                                        </select></div><br><br>
+                                                    <div style="float:left;margin-left: 8%;"><?php echo xlt('Specimen Description'); ?>:</div><div style="margin-left:48%;"><input type="text" id="spec_desc_1_1" name="spec_desc[0][0][]" value="" style="width:164px;" /></div><br><br>
+                                                </div>
+                                            </div>                                                                                                                                                                                
+                                        </span>
+                                    </td> 
+                                </tr>
+                                <tr id="AOEtemplate_1_1"  style="display:none">                                        
+                                    <td id="AOE_1_1" colspan='4'></td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                </table><!-- End dgord-->
+            </div><!-- End editor -->
+        </div><!-- End main -->
+
+    </div><!-- End accord -->
+
+    <?php
+}
+echo $this->form()->closeTag();
+echo $this->headScript()
+        ->prependFile($this->basePath() . '/js/lab/lab.js')
+        ->prependFile($this->basePath() . '/js/lib/jquery.autocomplete.js')
+        ->prependFile($this->basePath() . '/js/lib/jQuery.bubbletip-1.0.6.js')
+?>
+<!-- Start Row Template -->
+<div style="display:none" id="procedureclonetemplate">
+    <table  id='cloneID_1' class="dv-table gridtable" style="width:100%;background:#fafafa;padding:5px;">
+        <tr>
+            <td width='35%' valign='top'><?php echo $this->formRow($form->get('patient_instructions[0][]')); ?></td>
+            <td width='25%' valign='top'>
+                <span id="diagnosestemplate">
+                    <?php echo $this->formRow($form->get('diagnoses[0][]')); ?>
+                    <div class="autocomplete-suggestions" id="diagnodiv" style="display:none;z-index:99999;position:absolute;min-width:150px"></div>
+                </span>
+            </td>
+            <td width='20%' valign='top'>
+                <span id="proceduretemplate">
+                    <?php echo $this->formRow($form->get('procedures[0][]')); ?>
+                    <div class="autocomplete-suggestions" id="prodiv" style="display:none;z-index:99999;position:absolute;min-width:150px"></div>
+                    <?php echo $this->formRow($form->get('procedure_code[0][]')); ?>
+                    <?php echo $this->formRow($form->get('procedure_suffix[0][]')); ?>
+                </span>
+            </td>
+            <td valign='top' align='center'>
+                <span style="padding-left: 10px;" >
+                    <a href="#" id='deleteButton'  style="height: 20px;"  plain="true" onclick="cancelItem(this.id)">
+                        <img  class="easyui-linkbutton" iconCls="icon-cancel" src=<?php echo $this->basePath() . '/css/icons/cancel.png'; ?> title=<?php echo xlt('Cancel'); ?> border=0 />
+                    <?php echo xlt('Cancel'); ?>
+                    </a>
+                </span>
+                <span style="padding-left: 10px;">
+                    <a href="javascript:void(0)" id='addButton'  plain="true" onclick="addRow(this.id);">
+                        <img  src=<?php echo $this->basePath() . '/css/icons/edit_add.png'; ?> title=<?php echo xlt('Add'); ?> border=0 />
+                        <?php echo xlt('Add'); ?>
+                    </a>
+                </span>
+
+                <span style="padding-left: 10px;" >
+                    <a href="javascript:void(0)" id='addSpecimen'  plain="true" onclick="addSpecimen(this.id);" style="display:none;" >
+                        <img  src=<?php echo $this->basePath() . '/css/icons/add.png'; ?> title=<?php echo xlt('Add Specimen'); ?> border=0 />
+                        <?php echo xlt('Specimen'); ?>
+                    </a>                                            
+                    <div  id="hid_spec" class="hid_div gridview2 centerdiv" style="display:none;width: 30%;" >
+                        <div><img style="margin-left:95%;" src=<?php echo $this->basePath() . '/css/icons/no.png'; ?> onclick="closedlg()"> </div>					  
+                        <div style="text-align: center;margin-left: 35%;float: left; ">Specimen Collection</div>
+                        <span>
+                            <a href="javascript:void(0)" id='addSpecimenCollect'  plain="true" onclick="addSpecimenCollectSection(this.id)">
+                                <img  src="<?php echo $this->basePath() . '/css/icons/edit_add.png'; ?>" title="<?php echo xlt('Add'); ?>" border=0 />
+                            <?php echo xlt('Add'); ?>
+                            </a>
+                        </span>
+                        <br><br> 
+                        <div style="text-align: left;">
+                            <div style="float:left;margin-left: 8%;"><?php echo xlt('Specimen Label'); ?>:</div><div style="margin-left:48%;"><input type="text" id="spec_name" value="" style="width:164px;" /></div><br><br>
+                            <div style="float:left;margin-left: 8%;"><?php echo xlt('Specimen Site'); ?>:</div><div style="margin-left:48%;"><select id="spselect" style="width:171px;">
+                                <?php foreach ($specimen_source as $row): ?>
+                                        <option value="<?php echo $row['specimen_term'] . "@|@" . $row['specimen_descriptor']; ?>"><?php echo $row['specimen_term']; ?></option>
+                                <?php endforeach; ?>
+                                </select></div><br><br>
+                            <div style="float:left;margin-left: 8%;"><?php echo xlt('Specimen Descriptor 1'); ?>:</div><div style="margin-left:48%;"><select id="spselect1" style="width:171px;">
+                                <?php foreach ($specimen_source_des as $row): ?>
+                                        <option value="<?php echo $row['specimen_term'] . "~~" . $row['specimen_descriptor']; ?>"><?php echo $row['specimen_term']; ?></option>
+                                <?php endforeach; ?>
+                                </select></div><br><br>
+                            <div style="float:left;margin-left: 8%;"><?php echo xlt('Specimen Descriptor 2'); ?>:</div><div style="margin-left:48%;"><select id="spselect2" style="width:171px;">
+                                    <?php foreach ($specimen_source_des as $row): ?>
+                                        <option value="<?php echo $row['specimen_term'] . "~~" . $row['specimen_descriptor']; ?>"><?php echo $row['specimen_term']; ?></option>
+                                    <?php endforeach; ?>
+                                </select></div><br><br>
+                            <div style="float:left;margin-left: 8%;"><?php echo xlt('Specimen Descriptor 3'); ?>:</div><div style="margin-left:48%;"><select id="spselect3" style="width:171px;">
+                                    <?php foreach ($specimen_source_des as $row): ?>
+                                        <option value="<?php echo $row['specimen_term'] . "~~" . $row['specimen_descriptor']; ?>"><?php echo $row['specimen_term']; ?></option>
+                                    <?php endforeach; ?>
+                                </select></div><br><br>
+                            <div style="float:left;margin-left: 8%;"><?php echo xlt('Specimen Description'); ?>:</div><div style="margin-left:48%;"><input type="text" id="spec_desc" value="" style="width:164px;" /></div><br><br>
+                        </div>
+                    </div>                                                                                                                                                                                
+                </span>
+
+
+
+            </td> 
+        </tr>
+
+        <tr id="AOEtemplate"  style="display:none">                
+            <td id="AOE" colspan='4'></td>
+        </tr>
+    </table>
+</div>
+<!-- End Row Template -->
+
+<!-- Start New Order Template -->
+<div style="display:none" id="newprocedureclonetemplate">
+    <div id='mainTemplate'>
+        <div id='main' title="<?php echo xlt('Procedure Order'); ?>" data-options="iconCls:'icon-single'" style="overflow:auto;padding:10px;">
+            <div id="toolbar">
+                <span style="padding-left: 10px;" >
+                    <a href="javascript:void(0)" id='addButton'  plain="true" onclick="addRow(this.id);">
+                        <img  src=<?php echo $this->basePath() . '/css/icons/edit_add.png'; ?> title=<?php echo xlt('Add'); ?> border=0 />
+                        <?php echo xlt('Add Procedure'); ?>
+                    </a>
+                </span>
+                <span style="padding-left: 10px;" >
+                    <a href="#"  plain="true" onclick="newOrder();">
+                        <img  class="easyui-linkbutton" iconCls="icon-multiple" src=<?php echo $this->basePath() . '/css/icons/multiple.png'; ?> title=<?php echo xlt('Order'); ?> border=0 />
+                        <?php echo xlt('New Order'); ?>
+                    </a>
+                </span>
+                <span style="margin-left: 70%;">
+                    <a href="javascript:void(0)" id="removeOrder"  onclick="removeAccord(this.id)">
+                        <img  class="easyui-linkbutton" iconCls="icon-no" src=<?php echo $this->basePath() . '/css/icons/no.png'; ?> title=<?php echo xlt('Remove Order'); ?> border=0 />
+                        <?php echo xlt('Remove Order'); ?>
+                    </a>
+                </span>
+            </div>
+            <div id='editor' style="text-align: left; padding-left:20px;">
+
+                <table id='tt' border='0' class="dv-table gridtable" style="width:98%;background:#fafafa;padding:1px;margin-top:5px;margin-bottom:15px;border:1px solid #95B8E7; box-shadow: 10px 10px 5px #E0E0EB;">
+                    <tr style="font-weight: bold">
+                        <td><?php echo xlt('Ordering Provider'); ?></td>
+                        <td><?php echo xlt('Sending To'); ?></td>
+                        <td><?php echo xlt('Order Date'); ?></td>
+                        <td id='internaltimecaption' style="display:none"><?php echo xlt('Internal Time Collected'); ?></td>
+                        <td><?php echo xlt('Internal Comments'); ?></td>
+                        <td id='specimencollectedcaption' style="display:none" ><?php echo xlt('Specimen Collected'); ?></td>
+                        <td id='CORcaption' style="display:none" ><?php echo xlt('COR'); ?></td>
+                        <td id='CourtesyCopycaption' style="display:none" ><?php echo xlt('Courtesy Copy'); ?></td>
+                        <td id='ABNcaption' style="display:none" ><?php echo xlt('ABN'); ?></td>
+                        <td></td>
+                        <td><?php echo xlt('Priority'); ?></td>
+                        <td><?php echo xlt('Status'); ?></td>
+                        <td id='billtocaption' style="display:none" valign='top'><?php echo xlt('Bill To'); ?></td>
+                    </tr>
+                    <tr>
+                        <td valign='top'><?php echo $this->formRow($form->get('provider[0][]')); ?></td>
+                        <td valign='top'><?php echo $this->formRow($form->get('lab_id[0][]')); ?></td>
+                        <td valign='top' id="oderingdate"><?php echo $this->formRow($form->get('orderdate[0][]')); ?></td>
+                        <td valign='top' id="internaltime" style="display:none"><?php echo $this->formRow($form->get('timecollected[0][]')); ?></td>
+                        <td  valign='top'><?php echo $this->formRow($form->get('internal_comments[0][]')); ?></td>
+                        <td id='specimencollectedtd' style="display:none" valign='top'><?php echo $this->formRadio($form->get('specimencollected[0][]'), 'prepend'); ?></td>
+                        <td id='CORtd' style="display:none; text-align: center" valign='top'><input type="checkbox" name="COR[0][]" id="COR_1_1"></td>
+                        <td id='CourtesyCopytd' style="display:none; text-align: center" valign='top'><input type="checkbox" name="CourtesyCopy[0][]" id="CourtesyCopy_1_1" onclick="dispPopUp(this.id);">
+                            <span style="padding-left: 10px;" >
+                                <a href="#" id='viewButton'  style="height: 20px;display: none;"  plain="true" onclick="dispPopUp(this.id)">
+                                <?php echo xlt('View'); ?>
+                                </a>
+                            </span>
+                        </td>
+                        <td id='ABNtd' style="display:none; text-align: center" valign='top'><input type="checkbox" name="ABN[0][]"></td>
+                        <td>
+                            <div  id="hid_div_1_1" class="hid_div gridview2 centerdiv" style="display:none;" >
+                                <div><img style="margin-left:97%;" src=<?php echo $this->basePath() . '/css/icons/no.png'; ?> onclick="closedlg()"></div>					  
+                                <table id="tab_1_1">
+                                    <tr>
+                                        <td><?php echo xlt('Choose From the List'); ?></td>
+                                        <td>
+                                            <select id="ccselect_1_1" name="ccselect[0][]">
+                                                <option value="" selected="selected"><?php echo xlt('Unassigned'); ?></option>
+                                                <option value="patient"><?php echo xlt('Patient'); ?></option>
+                                                <option value="account"><?php echo xlt('Account'); ?></option>
+                                                <option value="fax"><?php echo xlt('Fax'); ?></option>
+                                            </select>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </td>
+                        <td valign='top'><?php echo $this->formRow($form->get('priority[0][]')); ?></td>
+                        <td valign='top'><?php echo $this->formRow($form->get('status[0][]')); ?></td>
+                        <td id='billtotd' style="display:none" valign='top'><?php echo $this->formRow($form->get('billto[0][]')); ?></td>
+                    </tr>
+                </table>
+
+                <table id='dgord' border='0'  style="width:98%;background:#fafafa;padding:5px;margin-top:5px;margin-bottom:15px;border:1px solid #95B8E7; box-shadow: 10px 10px 5px #E0E0EB;">
+                    <tr>
+                        <td>
+                            <table class="dv-table gridtable" style="width:100%;background:#fafafa;padding:5px;">
+                                <tr  style="font-weight: bold">
+                                    <td width='35%' valign='top'><?php echo xlt('Patient Instructions'); ?></td>
+                                    <td width='25%' valign='top'><?php echo xlt('Diagnosis'); ?>                                                                                                                                                
+                                    <?php
+                                    if (count($diagArr) > 1) { //IF MORE THAN ONE DIAGNOSIS CODE TYPE IS ACTIVATED		
+                                        $cnt = 0;
+                                        foreach ($diagArr as $key => $value) {
+                                            $cnt++;
+                                            $chk = "";
+                                            if ((count($userSelectedCodeTypes) > 0) && ($userSelectedCodeTypes[0] <> "")) {
+                                                if (in_array($key, $userSelectedCodeTypes)) {
+                                                    $chk = "checked=\"checked\"";
+                                                }
+                                            } else if ($key == "ICD9") {
+                                                $chk = "checked=\"checked\"";
+                                            }
+                                            ?>
+                                                &nbsp;<input type='checkbox' name='code_type[]' id='code_type<?php echo $cnt; ?>'
+                                                             value='<?php echo $key; ?>' <?php echo $chk; ?> onclick = "searchCodeString()"/>
+                                                <span <?php echo $class; ?>><?php echo $value['label']; ?></span>
+                                                <?php
+                                            }
+                                        } else { // IF ONLY ONE DIAGNOSIS CODE TYPE IS ACTIVATED
+                                            $diagCnt = 0;
+                                            foreach ($diagArr as $key => $value) {
+                                                $diagCnt++;
+                                                ?>
+                                                <input type='hidden' name='code_type' id='code_type<?php echo $diagCnt; ?>' value='<?php echo $key; ?>' />                                
+                                                <?php
+                                            }
+                                        }
+                                        ?></td>                                                                                                    
+                                    <td width='20%' valign='top'><?php echo xlt('Procedure'); ?></td>
+                                    <td align='center'><?php echo xlt('Action'); ?></td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                    <!-- -->
+                    <tr>
+                        <td id="insTempl"></td>
+                    </tr>
+                    <!-- -->
+                </table><!-- End dgord-->
+            </div><!-- End editor -->
+        </div><!-- End main -->
+    </div>
+</div>
+<!-- End New Order Template -->
+
+<!-- Provider (Add or Edit) -->
+<div id="dlgProvider" class="easyui-dialog" style="width:750px;height:415px;padding:10px 20px"  
+     closed="true" buttons="#dlg-buttons">  
+    <div class="ftitle" id='titleShow' style="color:#0068A4"><?php echo xlt('Providers List'); ?></div> 
+    <table id="dgProvider" title="My Users" class="easyui-datagrid" style="width:800px;height:300px"  
+           url="./getProcedureProviders"
+           idField="ppid" 
+           toolbar="#toolbarProvider"  
+           rownumbers="true" fitColumns="true" singleSelect="true">  
+        <thead>  
+            <tr>  
+                <th field="name" width="50"><?php echo xlt('Name'); ?></th>	
+                <th field="npi" width="50"><?php echo xlt('NPI'); ?></th>  
+                <th field="protocol" width="50"><?php echo xlt('Protocol'); ?></th>  
+                <th field="labtype" width="50"><?php echo xlt('Type'); ?></th>  
+            </tr>  
+        </thead>  
+    </table>  
+    <div id="toolbarProvider">  
+        <span>
+            <a href="javascript:void(0)" class="easyui-linkbutton"
+               iconCls="icon-add" plain="true" onclick="newProvider()">
+                <?php echo xlt('New'); ?>
+            </a>
+        </span>
+        <span id='editPProvider' style="display:none; float:left;">
+            <a href="javascript:void(0)" class="easyui-linkbutton"
+               iconCls="icon-edit" plain="true" onclick="editProvider()">
+                <?php echo xlt('Edit'); ?>
+            </a>
+        </span>
+        <span id='destroyPProvider' style="display:none; float:left;">
+            <a href="javascript:void(0)" class="easyui-linkbutton"
+               iconCls="icon-remove" plain="true" onclick="destroyProvider()">
+                <?php echo xlt('Remove'); ?>
+            </a>
+        </span>
+    </div>  
+
+    <div id="dlg" class="easyui-dialog" style="width:700px;height:480px;padding:10px 20px"  
+         closed="true" buttons="#dlg-buttons-providers">  
+        <div class="ftitle"><?php echo xlt('Procedure Providers'); ?></div>  
+        <form id="fmProcedureProvider" method="post" novalidate>  
+            <input type="hidden" id="ppid" name="ppid" value="" />
+            <table border='0'>
+                <tr>
+                    <td class="fitem"><?php echo xlt('Name'); ?>:</td>  
+                    <td class="fitem"><input name="name" class="easyui-validatebox combo validatebox-text" style="width:100%" required="true"></td>
+                </tr>
+                <tr class="fitem">
+                    <td><?php echo xlt('NPI'); ?>:</td>  
+                    <td><input type='text' name="npi" value='' class="easyui-validatebox combo validatebox-text" style="width:100%" /></td>
+                </tr>
+                <tr class="fitem">
+                    <td><?php echo xlt('Sender IDs'); ?>:</td>  
+                    <td><?php echo xlt('Application'); ?>:
+                        <input type='text' name="send_app_id" value='' class="easyui-validatebox combo validatebox-text"  />
+                        <?php echo xlt('Facility'); ?>:
+                        <input type='text' name="send_fac_id" value='' class="easyui-validatebox combo validatebox-text" /></td>
+                </tr>
+                <tr class="fitem">
+                    <td><?php echo xlt('Receiver IDs'); ?>:</td>  
+                    <td><?php echo xlt('Application'); ?>:
+                        <input type='text' name="recv_app_id" value='' class="easyui-validatebox combo validatebox-text" />
+                        <?php echo xlt('Facility'); ?>:
+                        <input type='text' name="recv_fac_id" value='' class="easyui-validatebox combo validatebox-text" /></td>
+                </tr>
+                <tr>
+                    <td class="fitem"><?php echo xlt('Usage'); ?>:</td>  
+                    <td class="fitem">
+                        <?php
+                        $usage = array(
+                            'D' => xl('Debugging'),
+                            'P' => xl('Production'),
+                        );
+                        ?>
+                        <input id="DorP" name="DorP" editable="false" class="easyui-combobox" data-options="
+                               valueField: 'value',
+                               textField: 'label',
+                               data: [
+                        <?php foreach ($usage as $key => $value) { ?>
+                                   {label: '<?php echo $value; ?>',value: '<?php echo $key; ?>'},
+                        <?php } ?>
+                               ]" />
+
+                    </td>
+                </tr>
+                <tr>
+                    <td class="fitem"><?php echo xlt('Protocol'); ?>:</td>  
+                    <td class="fitem">
+                               <?php
+                               $usage = array(
+                                   'DL' => xl('Download'),
+                                   'SFTP' => xl('SFTP')
+                               );
+                               ?>
+                        <input id="protocol" name="protocol" editable="false" class="easyui-combobox" data-options="
+                               valueField: 'value',
+                               textField: 'label',
+                               data: [
+                        <?php foreach ($usage as $key => $value) { ?>
+                                   {label: '<?php echo $value; ?>',value: '<?php echo $key; ?>'},
+                        <?php } ?>
+                               ]" />
+
+                    </td>
+                </tr>
+                <tr>
+                    <td class="fitem"><?php echo xlt('Remote Host'); ?>:</td>  
+                    <td class="fitem"><input type='text' name="remote_host" vlaue=''
+                                             class="easyui-validatebox combo validatebox-text" style="width:100%" /></td>
+                </tr>
+                <tr>
+                    <td class="fitem"><?php echo xlt('Login'); ?>:</td>  
+                    <td class="fitem"><input type='text' name="login" vlaue=''
+                                             class="easyui-validatebox combo validatebox-text" style="width:100%" /></td>
+                </tr>
+                <tr>
+                    <td class="fitem"><?php echo xlt('Password'); ?>:</td>  
+                    <td class="fitem"><input type='text' name="password" vlaue=''
+                                             class="easyui-validatebox combo validatebox-text" style="width:100%" /></td>
+                </tr>
+                <tr>
+                    <td class="fitem"><?php echo xlt('Orders Path'); ?>:</td>  
+                    <td class="fitem"><input type='text' name="orders_path" vlaue=''
+                                             class="easyui-validatebox combo validatebox-text" style="width:100%" /></td>
+                </tr>
+                <tr>
+                    <td class="fitem"><?php echo xlt('Results Path'); ?>:</td>  
+                    <td class="fitem"><input type='text' name="results_path" vlaue=''
+                                             class="easyui-validatebox combo validatebox-text" style="width:100%" /></td>
+                </tr>
+                <tr>
+                    <td class="fitem"><?php echo xlt('Notes'); ?>:</td>  
+                    <td class="fitem"><textarea name="notes" rows='3' cols='20'
+                                                class="easyui-validatebox combo validatebox-text"
+                                                style="height:20px; width:100%" ></textarea></td>
+                </tr>
+            </table>
+
+        </form>  
+    </div>  
+    <div id="dlg-buttons-providers">  
+        <a href="javascript:void(0)" class="easyui-linkbutton" iconCls="icon-ok" onclick="saveProviders()">Save</a>  
+        <a href="javascript:void(0)" class="easyui-linkbutton" iconCls="icon-cancel" onclick="javascript:$('#dlg').dialog('close')">Cancel</a>  
+    </div>  
+
+    <style type="text/css">  
+        #fm{  
+            margin:0;  
+            padding:10px 30px;  
+        }  
+        .ftitle{  
+            font-size:14px;  
+            font-weight:bold;  
+            padding:5px 0;  
+            margin-bottom:10px;  
+            border-bottom:1px solid #ccc;  
+        }  
+        .fitem{  
+            margin-bottom:5px;  
+        }  
+        .fitem label{  
+            display:inline-block;  
+            width:80px;  
+        }  
+    </style>
+</div>

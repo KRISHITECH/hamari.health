@@ -1,0 +1,264 @@
+<?php
+/* +-----------------------------------------------------------------------------+
+ *    OpenEMR - Open Source Electronic Medical Record
+ *    Copyright (C) 2013 Z&H Consultancy Services Private Limited <sam@zhservices.com>
+ *
+ *    This program is free software: you can redistribute it and/or modify
+ *    it under the terms of the GNU Affero General Public License as
+ *    published by the Free Software Foundation, either version 3 of the
+ *    License, or (at your option) any later version.
+ *
+ *    This program is distributed in the hope that it will be useful,
+ *    but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *    GNU Affero General Public License for more details.
+ *
+ *    You should have received a copy of the GNU Affero General Public License
+ *    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *    @author  Sanal Jacob <sanalj@zhservices.com>
+ * +------------------------------------------------------------------------------+
+ */
+?>
+<style>
+    table.gridview2 td{
+        border-style: dotted;
+        border-width: 1px 1px 1px 1px;
+        margin: 0;padding: 0;
+        border-color:#cccccc;
+    }
+    table.thcolor th{
+        background:linear-gradient(to bottom, #EFF5FF 0px, #E0ECFF 100%) repeat-x scroll 0 0 transparent;
+        border: 1px solid #cccccc;
+        height:10px;
+        height:20px; 
+    }
+    #patdiv{
+        position: absolute;
+        left: 460px;
+        border: 1px solid #95B8E7;
+        display: none;
+        min-width: 143px;
+        background-color: #fff;
+        margin: 0 6px;
+    }
+    .hid_div{
+        position: absolute;
+        left: 360px;
+        top: 220px;
+        background-color: #FFFFFF;
+        border-width:2px;
+        padding: 5px;
+        border-style: solid;
+        width:350px;
+        height:178px;
+        border-color:#CCCCCC;
+    }
+    .centerdiv{
+        position:absolute;
+        left: 40%;
+        top: 50%;
+        margin-left: -50px;
+        margin-top: -50px;
+    }
+
+    .choose_file{
+        position:relative;
+        display:inline-block;    
+        /*border-radius:8px;*/
+        border:#ebebeb solid 1px;
+        width:10px; 
+        /*padding: 4px 6px 4px 8px;*/
+        font: normal 14px Myriad Pro, Verdana, Geneva, sans-serif;
+        color: #7f7f7f;
+        /*margin-top: 2px;*/
+        /*background:white;*/
+    }
+    .choose_file input[type="file"]{
+        -webkit-appearance:none; 
+        position:absolute;
+        top:0; left:0;
+        opacity:0; 
+    }
+</style>
+<script type="text/javascript">
+    $(document).ready(function() {
+        $(".dateclass").datepicker({
+            dateFormat: "yy-mm-dd",
+            showOn: 'button',
+            buttonImage: '<?php echo $this->basePath(); ?>/css/icons/calendar.gif',
+            buttonImageOnly: true,
+        });
+        <?php if ($this->layout()->saved == 'yes') { ?>
+            alert('Successfully Saved');
+        <?php } ?>
+        $('.hid_div').click(function(e) { //button click class name is myDiv
+            e.stopPropagation();
+        })
+        $(document).click(function() {
+            $('.hid_div').hide();
+        });
+        $(".dateclass").on('change', function() {
+            var x = $(this).val();
+            if (!(x.match(/(\d{4})\-(0[1-9]|1[0-2])\-(0[1-9]|1[0-9]|2[0-9]|3[0-1])/))) {
+                alert("Invalid Date Format");
+                $(this).val("");
+            }
+        });
+    });
+    function doSearch() {
+        if ($("#search_patient").val() == '') {
+            $("#patient_id").val('');
+        }
+        $("#resultentry").submit();
+    }
+    function doSave() {
+        $("#resultentry").attr("action", window.location.href.replace("resultEntry", "saveResultEntry"));
+        $("#resultentry").submit();
+    }
+    function showMore(val) {
+        $("#hid_div_" + val).css('display', 'block');
+    }
+    function uploadPDF(val) {
+        $("#pdf_hid_div_" + val).css('display', 'block');
+    }
+    function closedlg() {
+        $('.hid_div').hide();
+    }
+
+</script>
+<div style="margin:10px 0;"></div>
+<div class="easyui-panel" title="<?php echo xlt('Result Entry'); ?>" >
+    <div style="padding:10px;">
+        <?php
+        $form = $this->form;
+        $form->setAttribute('action', $this->url('result', array('action' => 'resultEntry')));
+        $form->prepare();
+
+        echo $this->form()->openTag($form);
+        ?>
+        <div>
+            <div>
+                <span class="bold mediumfont" >Date</span>
+            </div>
+            <div style="float:left;padding-right:10px;">
+                <span><?php
+                    echo xlt('From') . ":&nbsp;";
+                    echo $this->formRow($form->get('search_from_date'));
+                    ?></span>
+                <span><?php
+                    echo xlt('To') . ":&nbsp;";
+                    echo $this->formRow($form->get('search_to_date'));
+                    ?></span>
+                <span style="padding-left:25px;"><?php
+                    echo xlt('Patient') . ":&nbsp;";
+                    echo $this->formRow($form->get('search_patient'));
+                    ?></span>
+                <div id="patdiv" ></div>
+                <?php echo $this->formRow($form->get('patient_id')); ?>
+            </div>
+            <a href="#" class="easyui-linkbutton" iconCls="icon-search" plain="true" onclick="doSearch()"><?php echo xlt('Search'); ?></a>
+        </div>
+        <br/>
+        <a href="#" class="easyui-linkbutton" iconCls="icon-save" plain="true" onclick="doSave()"><?php echo xlt('Save'); ?></a>
+        <table id="specimentable" class="dv-table gridview2 thcolor" style="width:99%;height:auto;background:#ffffff;padding:5px;margin-top:5px;margin-bottom:15px;" >
+            <tr>
+                <th colspan="4" class="mainhead" ><?php echo xlt('Order'); ?></th>
+                <th colspan="3" class="mainhead" ><?php echo xlt('Report'); ?></th>
+                <th colspan="9" class="mainhead" ><?php echo xlt('Results and Recommendations'); ?></th>
+            </tr>
+            <tr>
+                <td class="bold smallfont" style="width:20px;" ><?php echo xlt('PID'); ?></td>
+                <td class="bold smallfont" style="min-width:75px;" ><?php echo xlt('Patient Name'); ?></td>
+                <td class="bold smallfont" style="width:65px;" ><?php echo xlt('Date'); ?></td>
+                <td class="bold smallfont" style="min-width:90px;" ><?php echo xlt('Name'); ?></td>
+                <td class="bold smallfont" ><?php echo xlt('Specimen'); ?></td>
+                <td class="bold smallfont" style="min-width:145px;" ><?php echo xlt('Specimen Time Collected'); ?></td>
+                <td class="bold smallfont" ><?php echo xlt('Specimen Status'); ?></td>
+                <td class="bold smallfont" ><?php echo xlt('Group'); ?></td>
+                <td class="bold smallfont" style="min-width:90px;" ><?php echo xlt('Name'); ?></td>
+                <td class="bold smallfont" ><?php echo xlt('Abn'); ?></td>
+                <td class="bold smallfont" ><?php echo xlt('Value'); ?></td>
+                <td class="bold smallfont" ><?php echo xlt('Units'); ?></td>
+                <td class="bold smallfont" ><?php echo xlt('Range'); ?></td>
+                <td class="bold smallfont" ><?php echo xlt('Status'); ?></td>
+                <td class="bold smallfont" ><?php echo xlt('Upload'); ?></td>
+                <td class="bold smallfont" ><?php echo xlt('More'); ?></td>
+            </tr>
+            <?php
+            foreach ($this->layout()->res as $val):
+
+                $res_units = \Application\Plugin\CommonPlugin::getDropdownValAsText("proc_rep_status", $val['report_status']);
+                $report_status_title = \Lab\Model\ResultTable::getList($val['report_status'], 'proc_rep_status');
+                ?>
+                <tr>
+                    <td><?php echo $val['patient_id']; ?></td>
+                    <td><?php echo $val['pname']; ?></td>
+                    <?php echo $this->formRow($form->get('procedure_report_id[]')->setValue($val['prid'])); ?>
+                    <td><?php echo $val['date_ordered']; ?></td>
+                    <td><?php echo $val['procedure_name']; ?></td>
+                    <td><?php echo $val['specimen_num']; ?></td>
+                    <td><?php echo $val['date_collected']; ?></td>
+                    <td><?php echo $report_status_title[0]['list_title']; ?></td>
+                    <td><?php echo ""; ?></td>
+                    <td><?php echo $val['procedure_name']; ?></td><!-- need to fix -->
+                    <td><?php echo $this->formRow($form->get('abnormal[]')->setValue($val['abnormal'])); ?></td>
+                    <td><?php echo $this->formRow($form->get('result[]')->setValue($val['result'])); ?></td>
+                    <td><?php echo $this->formRow($form->get('units[]')->setValue($val['units'] ? $val['units'] : $val['def_units'])); ?></td>
+                    <td><?php echo $this->formRow($form->get('range[]')->setValue($val['range'] ? $val['range'] : $val['def_range'])); ?></td>
+                    <td><?php echo $this->formRow($form->get('status[]')->setValue($val['order_status'])); ?></td>
+                    <td align="center">
+                        <div class="choose_file">
+                            <span><img src=<?php echo $this->basePath() . '/css/icons/upload.png'; ?> border='0'></span>
+                            <span><?php echo $this->formRow($form->get('fileupload[]')); ?></span>
+                        </div>                                               
+                    </td>
+
+                    <td><a style="position: relative;" href="javascript:showMore('<?php echo $val['prid']; ?>')" ><img src="<?php echo $this->basePath() . '/css/icons/pencil.png'; ?>" ></a>
+                        <div  id="hid_div_<?php echo $val['prid']; ?>" class="hid_div gridview2 centerdiv" style="display:none;" >
+                            <div><img style="margin-left:330px;" src=<?php echo $this->basePath() . '/css/icons/no.png'; ?> onclick="closedlg()">   </div>
+
+                            <table>
+                                <tr>
+                                    <td style="border:none !important;"><?php echo xlt('Status'); ?></td>
+                                    <td style="border:none !important;"><?php echo $this->formRow($form->get('result_status[]')->setValue($val['result_status'])); ?></td>
+                                </tr>                                
+                                <tr>
+                                    <td style="border:none !important"><?php echo xlt('Comments'); ?></td>
+                                    <td><?php echo $this->formRow($form->get('comments[]')->setValue($val['comments'])); ?></td>
+                                </tr>                                
+                                <td style="border:none !important" colspan="2" align="center"> <img  src=<?php echo $this->basePath() . '/css/icons/ok.png'; ?> onclick="closedlg()"></td>
+                                </tr>
+                            </table>
+                        </div>
+                    </td>
+                </tr>
+            <?php endforeach; ?>
+        </table>
+    </div>
+</div>
+<?php
+echo $this->form()->closeTag();
+echo $this->headScript()
+        ->prependFile($this->basePath() . '/js/lab/patient.js')
+        ->prependFile($this->basePath() . '/js/lib/jquery.autocomplete.js')
+        ->prependFile($this->basePath() . '/js/lib/jQuery.bubbletip-1.0.6.js')
+?>
+<script>
+    function checkUploadFile(thisValue) {
+        $('input[type="file"]').each(function(i) {
+            var files = $(this).get(0).files;
+            for (var j = 0; file = files[j]; j++) {
+                var size = file.size;
+                if (file.type != 'application/pdf') {
+                    $('#target').html('File type not support...!');
+                } else if (file.size == 0) {
+                    $('#target').html('File size is zero...!');
+                }
+            }
+        });
+        //alert('This file size is: ' + thisValue[0].size/1024/1024 + "MB");
+    }
+    /*$('#fileupload').bind('change', function() {
+     alert('This file size is: ' + this.files[0].size/1024/1024 + "MB");
+     });*/
+</script>

@@ -59,7 +59,7 @@ class ApplicationTable extends AbstractTableGateway
 
       try {
         $statement  = $this->adapter->query($sql);
-        $return     = $statement->execute($params);
+        $return     = $statement->execute(array_values($params));
         $result     = true;
       } catch (\Zend\Db\Adapter\ExceptionInterface $e) {
         if ($error) {

@@ -1,0 +1,419 @@
+<?php
+/* +-----------------------------------------------------------------------------+
+ *    OpenEMR - Open Source Electronic Medical Record
+ *    Copyright (C) 2013 Z&H Consultancy Services Private Limited <sam@zhservices.com>
+ *
+ *    This program is free software: you can redistribute it and/or modify
+ *    it under the terms of the GNU Affero General Public License as
+ *    published by the Free Software Foundation, either version 3 of the
+ *    License, or (at your option) any later version.
+ *
+ *    This program is distributed in the hope that it will be useful,
+ *    but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *    GNU Affero General Public License for more details.
+ *
+ *    You should have received a copy of the GNU Affero General Public License
+ *    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *    @author  Sanal Jacob <sanalj@zhservices.com>
+ * +------------------------------------------------------------------------------+
+ */
+$labresults = $this->labResult;
+?>
+<script type="text/javascript">
+    window.onunload = refreshParent;
+    function refreshParent() {
+        window.opener.location.reload();
+    }
+    $(document).ready(function() {
+        $(".show-more a").on("click", function() {
+            var $link = $(this);
+            var $content = $link.parent().prev("div.text-content");
+            var linkText = $link.text();
+            switchClasses($content);
+            $link.text(getShowLinkText(linkText));
+            return false;
+        });
+        $(function()
+        {
+            // One instance that's reused to show info for the current person  
+            var container = $('<div id="personPopupContainer">'
+                    + '  <div id="personPopupContent"></div>'
+                    + '</div>');
+            $('body').append(container);
+            $('.personPopupTrigger').live('focus', function()
+            {
+                // format of 'rel' tag: pageid,personguid  
+                var reason = $(this).attr('rel');
+                var pos = $(this).offset();
+                var width = $(this).width();
+                //alert(pos.left+"-"+pos);
+                container.css({
+                    left: (pos.left - width + 40) + 'px',
+                    top: pos.top - 5 + 'px'
+                });
+                $('#personPopupContent').html(reason);
+                container.css('display', 'block');
+                $('.personPopupTrigger').live('blur', function()
+                {
+                    container.css('display', 'none');
+                });
+            });
+        });
+        key = Number("<?php echo $this->key; ?>");
+        len = Number("<?php echo $this->len; ?>");
+        if (key == len) {
+            $("#img_next").css('display', 'none');
+            $("#img_next_disabled").css('display', '');
+        }
+        if (key == 0) {
+            $("#img_prev").css('display', 'none');
+            $("#img_prev_disabled").css('display', '');
+        }
+    });
+    function next_result(action) {
+<?php
+$key = $this->key;
+$order_id_list = $this->order_id_list;
+$order_id_arr = explode(",", $order_id_list);
+?>
+        if (action == 'next') {
+<?php
+$key = $this->key + 1;
+if ($key > $this->len) {
+    $key = 0;
+    ?>
+                $("#img_next").css('display', 'none');
+                $("#img_next_disabled").css('display', '');
+    <?php
+        } else {
+            $id = $order_id_arr[$key];
+            ?>
+                        window.location = "review?order_num=<?php echo $id; ?>&order_id_list=<?php echo $order_id_list; ?>";
+            <?php
+        }
+        ?>
+
+        } else {
+        <?php
+        $key = $this->key - 1;
+        if ($key < 0) {
+            $key = $this->len;
+            ?>
+                        $("#img_prev").css('display', 'none');
+                        $("#img_prev_disabled").css('display', '');
+            <?php
+        } else {
+            $id = $order_id_arr[$key];
+            ?>
+                        window.location = "review?order_num=<?php echo $id; ?>&order_id_list=<?php echo $order_id_list; ?>";
+            <?php
+        }
+        ?>
+
+        }
+    }
+    function switchClasses($content) {
+        if ($content.hasClass("short-text")) {
+            $content.removeClass("short-text");
+            $content.addClass("full-text");
+        } else {
+            $content.removeClass("full-text");
+            $content.addClass("short-text");
+        }
+    }
+    function getShowLinkText(currentText) {
+        var newText = '';
+        if (currentText.toUpperCase() === "SHOW MORE") {
+            newText = "Show less";
+        } else {
+            newText = "Show more";
+        }
+        return newText;
+    }
+
+    function show_hide_comments() {
+        if ($("#showhide").hasClass('hide_comm')) {
+            $("#showhide").removeClass('hide_comm');
+            $("#showhide").addClass('show_comm');
+            $('tr[id^=full_comments_]').hide();
+        } else if ($("#showhide").hasClass('show_comm')) {
+            $("#showhide").removeClass('show_comm');
+            $("#showhide").addClass('hide_comm');
+            $('tr[id^=full_comments_]').show();
+        }
+    }
+</script>
+<div style="position:fixed;top:0;left:10px;margin-top:150px;padding-top:150px;" >
+    <img src="<?php echo $this->basePath() . '/css/icons/prev.png'; ?>" style="cursor:pointer;" onclick="next_result('prev');" title="Previous" id="img_prev" >
+    <img src="<?php echo $this->basePath() . '/css/icons/prev_disable.png'; ?>" title="Previous" id="img_prev_disabled" style="display:none;" >
+</div>
+<div style="margin:0 25px;" >
+    <table id="labresult"  class="dv-table gridview2 thcolor" cellspacing="0" cellpadding="0" style="width:99%;height:auto;background:#ffffff;padding:5px;margin-top:5px;margin-bottom:15px;">
+        <thead">
+            <tr>
+                <th  colspan="4"><?php echo xlt('Order'); ?></th>     
+                <th  colspan="2"><?php echo xlt('Report'); ?></th>
+                <th  colspan="7"><?php echo xlt('Results and Recommendations'); ?></th>
+            </tr>
+        </thead>
+        <tr>
+            <td  class="headtd" width='4%'><b><?php echo xlt('PID'); ?></b></td>
+            <td  class="headtd" width='5%'><b><?php echo xlt('Order Date'); ?></b></td>
+            <!--<td  class="headtd" ><b><?php echo xlt('Procedure Name'); ?></b></td>-->
+            <td  class="headtd" width='3%'><b><?php echo xlt('Ord.No.'); ?></b></td>
+            <td  class="headtd" ><b><?php echo xlt('Status'); ?></b></td>
+            <td  class="headtd" title="<?php echo xlt('Time Collected'); ?>"><b><?php echo xlt('Time Collected'); ?></b></td>
+            <td  class="headtd" width='10%'><b><?php echo xlt('Status'); ?></b></td>
+            <td  class="headtd" ><b><?php echo xlt('Name'); ?></b></td>
+            <td  class="headtd"  width='3%'><b><?php echo xlt('Abn'); ?></b></td>
+            <td  class="headtd"  width='4%'><b><?php echo xlt('Value'); ?></b></td>
+            <td  class="headtd"  width='5%'><b><?php echo xlt('Units'); ?></b></td>
+            <td  class="headtd"  width='6%'><b><?php echo xlt('Range'); ?></b></td>
+            <td  class="headtd"  width='4%'><b><?php echo xlt('Status'); ?></b></td>
+            <td  class="headtd"  title="<?php echo xlt('Comments'); ?>"><b><?php echo xlt('Comm.'); ?></b></td>
+        </tr>
+        <?php
+        $i = 0;
+        $main_grp = '';
+        $code_suffix = '';
+        $profile_grp = '';
+        foreach ($labresults as $labresult) :
+            $color = ($labresult['color'] <> "") ? $labresult['color'] : $color;
+            $totrows = $labresult['totalRows'];
+            if ($labresult[order_title] == "" && $labresult[procedure_name] == "")
+                continue;
+            $patient_instructions = $labresult[patient_instructions];
+            if ($labresult[order_title] != '' && ($main_grp != $labresult[order_title] || $code_suffix != $labresult[code_suffix] || $labresult[order_id])) {
+                ?>
+                <tr style="background-color:<?php echo $color; ?>">
+                    <td  class="tdfont childtdF" ><?php echo $this->escapeHtml($labresult[patient_id]); ?>
+                        <?php if ($labresult[patient_id] && $patient_instructions) { ?>
+                            <a href="javascript:void(0)" class="personPopupTrigger" rel="<?php echo str_replace("\n", "", $patient_instructions); ?>"><img src=<?php echo $this->basePath() ?>/css/icons/comments.png title=<?php echo xlt('Internal Comments'); ?> >
+                                <?php
+                            }
+                            ?>
+                                                                                                                                                       </td>	
+                            <td  class="tdfont childtd"><?php echo $this->escapeHtml($labresult[date_ordered]); ?></td>
+                            <td  class="tdfont childtd"><?php echo $this->escapeHtml($labresult[order_id]); ?></td>
+                            <td  class="tdfont childtd" nowrap=nowrap><?php echo $this->escapeHtml($labresult[order_status]); ?></td>
+                            <td  class="tdfont childtd" title="<?php echo $this->escapeHtml($labresult[date_collected]); ?>" nowrap=nowrap>
+                                <?php echo $this->escapeHtml($labresult[date_collected]); ?>
+                            </td>
+                            <td class="tdfont childtd" ><?php echo $this->escapeHtml($labresult[report_status]); ?></td>
+                            <td  class="tdfont headchildtd" colspan="11" title="<?php echo $this->escapeHtml($labresult[order_title]); ?>" nowrap=nowrap><b><?php echo $this->escapeHtml($labresult[order_title]); ?></b></td>
+                </tr>
+                <?php
+            }
+            if ($labresult[profile_title] && $profile_grp != $labresult[profile_title]) {
+                ?>
+                <tr style="background-color:<?php echo $color; ?>">
+                    <td  class="tdfont childtdF">&nbsp;</td>	
+                    <td  class="tdfont childtd">&nbsp;</td>
+                    <td  class="tdfont childtd">&nbsp;</td>
+                    <td  class="tdfont childtd" nowrap=nowrap>&nbsp;</td>
+                    <td  class="tdfont childtd" nowrap=nowrap>&nbsp;</td>
+                    <td class="tdfont childtd" >&nbsp;</td>
+                    <td  class="tdfont subchildtd" colspan="11" nowrap=nowrap>&nbsp;&nbsp;&nbsp;<b><?php echo $this->escapeHtml($labresult[profile_title]); ?></b></td>
+
+                </tr>
+                <?php
+            }
+            if ($labresult[result] == 'DNR') {
+                $profile_grp = $labresult[profile_title];
+                $main_grp = $labresult[order_title];
+                $code_suffix = $labresult[code_suffix];
+                continue;
+            }
+            ?>
+            <tr <?php echo $labresult[result_status] ? '' : 'class="context-menu-res"'; ?> id="order-<?php echo $labresult[procedure_order_id] . "-" . $labresult[procedure_order_seq] . "-" . $labresult[procedure_name]; ?>" style="background-color:<?php echo $color; ?>">
+                <td  class="tdfont childtdF">&nbsp;
+                    <?php
+                    if ($labresult[order_title] == NULL) {
+                        echo $this->escapeHtml($labresult[patient_id]);
+                        if ($labresult[patient_id] && $patient_instructions) {
+                            ?>
+                            <a href="#" class="personPopupTrigger" rel="<?php echo $this->escapeHtml($patient_instructions); ?>"><img src=<?php echo $this->basePath() ?>/css/icons/comments.png title=<?php echo xlt('Internal Comments'); ?> >
+                                <?php
+                            }
+                        } else
+                            echo '&nbsp;';
+                        ?>
+                                                                                                                              </td>	
+                        <td  class="tdfont childtd"><?php echo $labresult[order_title] == NULL ? $this->escapeHtml($labresult[date_ordered]) : '&nbsp;'; ?></td>
+                        <td  class="tdfont childtd"><?php echo $labresult[order_title] == NULL ? $this->escapeHtml($labresult[order_id]) : '&nbsp;'; ?></td>
+                        <td  class="tdfont childtd" nowrap=nowrap><?php echo $labresult[order_title] == NULL ? $this->escapeHtml($labresult[order_status]) : '&nbsp;'; ?></td>
+                        <td  class="tdfont childtd" nowrap=nowrap><?php echo $labresult[order_title] == NULL ? $this->escapeHtml($labresult[date_collected]) : '&nbsp;'; ?></td>
+                        <td class="tdfont childtd" ><?php echo $labresult[order_title] == NULL ? $this->escapeHtml($labresult[report_status]) : '&nbsp;'; ?></td>
+                        <td  class="tdfont childtd" nowrap=nowrap>
+                            <?php if ($labresult[order_title] == NULL) {
+                                ?>
+                                <b><?php echo $this->escapeHtml($labresult[result_text]); ?></b>
+                                <?php
+                            } else {
+                                ?>
+                                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<?php echo $this->escapeHtml($labresult[result_text]); ?>
+                                <?php
+                            }
+                            ?>
+                        </td>
+                        <?php
+                        $icclas = $title = '';
+                        if ($labresult[abnormal] == "H" || $labresult[abnormal] == "high") {
+                            $icclas = 'icon-H';
+                            $title = xlt('HIGH');
+                        } elseif ($labresult[abnormal] == "HH") {
+                            $icclas = 'icon-HH';
+                            $title = xlt('VERY HIGH');
+                        } elseif ($labresult[abnormal] == "L" || $labresult[abnormal] == "low") {
+                            $icclas = 'icon-L';
+                            $title = xlt('LOW');
+                        } elseif ($labresult[abnormal] == "LL") {
+                            $icclas = 'icon-LL';
+                            $title = xlt('VERY LOW');
+                        } elseif ($labresult[abnormal] == "N" || $labresult[abnormal] == "no") {
+                            $icclas = 'icon-ok';
+                            $title = xlt('NORMAL');
+                        } elseif ($labresult[abnormal] == "A" || $labresult[abnormal] == "yes") {
+                            $icclas = 'icon-A';
+                            $title = xlt('ABNORMAL');
+                        } else
+                            $icon = $labresult[abnormal];
+
+                        $res_units = \Application\Plugin\CommonPlugin::getDropdownValAsText("proc_unit", $labresult[units]);
+                        ?>
+                        <td  class="tdfont childtd <?php echo $icclas; ?>" title="<?php echo $title; ?>"><?php echo $icon; ?></td>
+                        <td  class="tdfont childtd" title="<?php echo $labresult[result]; ?>"><?php echo $labresult[result]; ?></td>
+                        <td  class="tdfont childtd" title="<?php echo $this->escapeHtml($labresult[units]); ?>"><?php echo $this->escapeHtml($labresult[units]); ?></td>
+                        <td  class="tdfont childtd" title="<?php echo $this->escapeHtml($labresult[range]); ?>"><?php echo strip_tags($labresult[range]); ?> </td>
+                        <td  class="tdfont childtd" >
+                            <?php
+                            $resStat = '';
+                            if ($labresult[result_status] == 'F')
+                                $resStat = xlt('Final');
+                            elseif ($labresult[result_status] == 'P')
+                                $resStat = xlt('Preliminary');
+                            elseif ($labresult[result_status] == 'I')
+                                $resStat = xlt('Pending');
+                            elseif ($labresult[result_status] == 'C')
+                                $resStat = xlt('Correction');
+                            elseif ($labresult[result_status] == 'X')
+                                $resStat = xlt('Cancelled');
+                            else
+                                $resStat = ucwords($labresult[result_status]);
+                            if (!$resStat) {
+                                $resStat = "Pending";
+                            }
+                            echo $resStat;
+                            ?>
+                        </td>
+                        <td  class="tdfont childtd <?php echo trim($labresult[comments]) ? 'comments_col' : ''; ?>" align="center" >
+                            <?php
+                            $comments = '';
+                            if (trim($labresult[comments])) {
+                                $comments = $labresult[comments];
+                                ?>
+                                <a id="<?php echo $i; ?>" name="<?php echo $i; ?>"  onclick="showcomments('<?php echo $i; ?>')">
+                                    <img src="<?php echo $this->basePath() ?>/css/icons/comments.png" title="<?php echo xlt('Comments'); ?>" >
+                                </a>
+                                <?php
+                            }
+                            ?>
+                        </td>
+
+            </tr>
+            <?php
+            if (trim($labresult[comments])) {
+                ?>
+                <tr id="full_comments_<?php echo $i; ?>" >
+                    <td colspan="6" class="comments_blank_bg" >
+                    </td>
+                    <td colspan="7" class="comments_bg comments_td" >
+                        <div class="text-container">
+                            <div class="text-content short-text">
+                                <?php echo "<pre>" . str_replace("\\r\\n", "<br>", $labresult[comments]) . "</pre>"; ?>
+                            </div>
+                            <?php if (substr_count($labresult[comments], "\\r\\n") > 7) { ?>
+                                <div class="show-more">
+                                    <a href="#">Show more</a>
+                                </div>
+                            <?php } ?>
+                        </div>
+                    </td>
+
+                </tr>
+                <?php
+            }
+            ?>
+            <?php
+            $i++;
+            $profile_grp = $labresult[profile_title];
+            $main_grp = $labresult[order_title];
+            $code_suffix = $labresult[code_suffix];
+            $review_comments = $labresult[review_comments];
+            $order_stat = $labresult[order_status];
+            $reviewed_by = $labresult[reviewed_by];
+            $signed_by = $labresult[signed_by];
+        endforeach;
+        ?>
+    </table>
+</div>
+<div style="position:fixed;top:0;right:10px;margin-top:150px;padding-top:150px;" >
+    <img src="<?php echo $this->basePath() . '/css/icons/next.png'; ?>" style="cursor:pointer;" onclick="next_result('next');" title="Next" id="img_next">
+    <img src="<?php echo $this->basePath() . '/css/icons/next_disable.png'; ?>" title="Next" id="img_next_disabled" style="display:none;" >
+</div>
+<div>
+    <?php
+    if ($this->report_pdf != '') {
+        ?>
+          <!--<iframe src="<?php echo $this->report_pdf; ?>" style="width:620px;height:800px;"></iframe>-->
+        <a href="<?php echo $this->report_pdf; ?>" target="_blank" ><?php echo xlt('Download'); ?></a><br>
+        <embed width="100%" height="500px;" name="plugin" src="<?php echo $this->report_pdf; ?>" type="application/pdf">
+        </embed>
+        <?php
+    }
+    ?>
+    <span><?php echo xlt('Comments:'); ?></span>
+    <textarea style='width:99%;resize:none;height:100px;' id="review_comment"><?php echo $this->escapeHtml($review_comments); ?></textarea>
+    <table align="center">
+        <tr>
+            <?php
+            if ($order_stat != "Reviewed" && $order_stat != "Signed" && $order_stat != "Reviewed and Signed") {
+                ?>
+                <td style="text-align:center;" ><a onclick="updateStatus('<?php echo $this->order_id; ?>', 'reviewed')" class="css_button"><span><?php echo xlt('Review') ?></span></a></td>
+            </tr><tr>
+                <td style="text-align:center;" ><a onclick="updateStatus('<?php echo $this->order_id; ?>', 'reviewedandsigned')" class="css_button"><span><?php echo xlt('Review and Sign') ?></span></a></td>
+                <?php
+            } elseif ($order_stat == "Reviewed") {
+                ?>
+                <td style="text-align:center;" ><span style="color:#E51D1D;font-size:14px;"><?php echo xlt('Reviewed by') . ':' . $reviewed_by; ?></span><br></td>
+            </tr><tr>
+                <td style="text-align:center;" ><a onclick="updateStatus('<?php echo $this->order_id; ?>', 'signed')" class="css_button"><span><?php echo xlt('Sign') ?></span></a></td>
+                <?php
+            } elseif ($order_stat == "Signed") {
+                if ($reviewedby == $signedby) {
+                    ?>
+                    <td style="text-align:center;" ><span style="color:#E51D1D;font-size:14px;"><?php echo xlt('Reviewed and Signed by') . ':' . $signed_by; ?></span><br></td>
+                    <?php
+                } else {
+                    ?>
+                    <td style="text-align:center;" ><span style="color:#E51D1D;font-size:14px;"><?php echo xlt('Reviewed by') . ':' . $reviewed_by; ?></span><br></td>
+                </tr><tr>
+                    <td style="text-align:center;" ><span style="color:#E51D1D;font-size:14px;"><?php echo xlt('Signed by') . ':' . $signed_by; ?></span><br></td>
+                    <?php
+                }
+            } elseif ($order_stat == "Reviewed and Signed") {
+                ?>
+                <td style="text-align:center;" ><span style="color:#E51D1D;font-size:14px;"><?php echo xlt('Reviewed and Signed by') . ':' . $signed_by; ?></span><br></td>
+                    <?php
+                }
+                ?>
+        </tr>
+    </table>
+</div>
+<?php
+echo $this->headScript()->prependFile($this->basePath() . '/js/lib/jquery.ui.position.js')
+        ->prependFile($this->basePath() . '/js/lab/result_review.js')
+        ->prependFile($this->basePath() . '/js/lib/jquery.contextMenu.js')
+        ->prependFile($this->basePath() . '/js/lib/jquery-1.8.2.min.js')
+?>

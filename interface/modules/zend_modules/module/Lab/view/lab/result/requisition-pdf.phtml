@@ -1,0 +1,1580 @@
+<?php 
+/* +-----------------------------------------------------------------------------+
+ *    OpenEMR - Open Source Electronic Medical Record
+ *    Copyright (C) 2013 Z&H Consultancy Services Private Limited <sam@zhservices.com>
+ *
+ *    This program is free software: you can redistribute it and/or modify
+ *    it under the terms of the GNU Affero General Public License as
+ *    published by the Free Software Foundation, either version 3 of the
+ *    License, or (at your option) any later version.
+ *
+ *    This program is distributed in the hope that it will be useful,
+ *    but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *    GNU Affero General Public License for more details.
+ *
+ *    You should have received a copy of the GNU Affero General Public License
+ *    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *    @author  Sanal Jacob <sanalj@zhservices.com>
+ * +------------------------------------------------------------------------------+
+ */
+?>
+<style type="text/css">
+    .labHeader{font-size: 60px;float: right;text-align: right;text-height: max-size}
+    <?php
+    if ($orderDetails['name'] == 'Dianon') {
+        ?>
+        .barcode{
+            background: url(<?php echo $img_name; ?>) no-repeat center center;
+            padding: 5px 5px;
+            height: 30px;
+        }
+        <?php
+    } elseif ($orderDetails['name'] == 'Labcorp') {
+        ?>
+        .barcode2d{
+            /*    background : url(<?php echo $img_name; ?>) no-repeat center center;
+                padding: 5px 5px;
+                height: 160px;*/
+        }
+        <?php
+    }
+    ?>
+    table {      
+        font-family: times;
+        /*font-family: Arial, Helvetica, sans-serif;*/
+        font-size: 10px;    
+    }
+    table.local { 
+        font-family: times;
+        /*font-family: Arial, Helvetica, sans-serif;*/
+        font-size: 10px;    
+    }
+    table.footerTable { 
+        border-style: dashed;
+        border-width: 1px;
+        border-color: #CACACA;
+    }
+    td.borderOk{  
+        border-style: solid;
+        border-width: 1px;
+        border-color: #252525;
+        padding-left: 5px;
+        padding-top: 1px;
+        padding-bottom: 1px;
+        border-collapse: collapse;
+        overflow: hidden;
+    }
+    td.borderO{  
+        border-style: solid;
+        border-width: 1px;
+        border-color: #252525;
+        border-collapse: collapse;
+        overflow: hidden;
+    }
+    td.borderFade{  
+        border-style: solid;
+        border-width: 1px;
+        border-color: #CACACA;
+        padding-left: 10px;
+        padding-top: 10px;
+        padding-bottom: 10px;
+    }
+    td.tdHead{
+        font-weight: bold;
+        padding-top: 10px;
+    }
+    td.footTd{
+        border-style: dashed;
+        border-width: 1px;
+        border-color: #CACACA;
+        height: 20px;
+    }
+    table.print-friendly tr td, table.print-friendly tr th {
+        page-break-inside:avoid; 
+        page-break-after:auto;
+    }   
+    @page { 
+        margin: 150px 50px 0px 50px;
+        counter-increment: page; 
+
+    }
+    .labcorpPre{
+        /*line-height: 7px !important;*/
+    }
+    <?php
+    if ($orderDetails['name'] == 'Labcorp') {
+        ?>
+        #header { position: fixed; left: 0px; top: 0px; right: 0px; text-align: center; background-color: white; }
+        #content { padding: 0px; margin: 0px 0px 0px 0px;  width:98%; }
+        <?php
+    } else {
+        ?>
+        #header { position: fixed; left: 0px; top: 0px; right: 0px; height: 100px; text-align: center; background-color: white;}
+        #content { padding: 0px; margin: 0px 0px 0px 0px; width:98%; }
+        <?php
+    }
+    ?>
+    #footer { position: fixed; left: 0px; bottom: 80px; right: 0px; height: 50px; background-color: white; width:100%; }
+    .borderRight{ 
+        border-right-style: solid;
+        border-right-width: 1;
+        border-right-color: #252525;
+        padding-left: 10px;
+        padding-top: 2px;
+        padding-bottom: 2px;
+        border-collapse: collapse;
+        overflow: hidden;
+    }
+    .borderLeft{
+        border-left-style: solid;
+        border-left-width: 1;
+        border-left-color: #252525;
+        padding-left: 10px;
+        padding-top: 2px;
+        padding-bottom: 2px;
+        border-collapse: collapse;
+        overflow: hidden;    
+    }
+</style>
+<?php if ($orderDetails['name'] == 'Local' || $orderDetails['name'] == 'Atherotech') { ?>
+    <div id="content" >
+        <table border="0" style="width: 100%"  cellpadding="2" cellspacing="0" class="local">
+            <tr>
+                <td colspan="2">
+                    <div id="barcode" class="barcode"></div>
+                </td>
+                <td colspan="2"><div class="labHeader"><?php echo $orderDetails['name']; ?> </div></td>
+            </tr>
+            <tr>
+                <td class="borderOk" colspan="2">
+                    <?php echo 'Client # ' . $orderDetails['procedure_order_id']; ?><br /><br />
+                    <?php echo $orderDetails['fcname']; ?><br />
+                    <?php echo $orderDetails['fcstreet']; ?><br />
+                    <?php echo $orderDetails['fccity']; ?><br />
+                    <?php echo $orderDetails['fcstate']; ?><br />
+                    <?php echo $orderDetails['fcpost']; ?><br />          
+                </td>
+                <td class="borderOk" colspan="2">
+                    <strong><u><?php echo 'Patient Information'; ?></u></strong><br /><br />
+                    <?php echo $orderDetails['pname']; ?><br />
+                    <?php echo $orderDetails['street']; ?><br />
+                    <?php echo $orderDetails['city']; ?><br />
+                    <?php echo $orderDetails['postal_code']; ?><br /> 
+                </td>
+            </tr> 
+            <tr>
+                <td class="borderOk" colspan="2">
+                    <?php echo xlt('Collection Date & Time');?> :   <?php echo $orderDetails['date_collected']; ?><br />
+                    <?php echo xlt('Lab Reference Id');?> : <?php echo $orderDetails['ufname'] . ' - ' . $orderDetails['procedure_order_id']; ?>
+                </td>
+                <td class="borderOk" colspan="2">
+                    <?php echo xlt('Patient Id');?> : <?php echo $orderDetails['patient_id']; ?><br />
+                    <?php echo xlt('Date Of Birth');?> : <?php echo $orderDetails['DOB']; ?><br />
+                    <?php echo xlt('Sex');?> : <?php echo $orderDetails['sex']; ?><br />
+                </td>
+            </tr>
+            <tr>
+                <td class="borderOk" colspan="2">
+                    <?php echo xlt('Ref Physician Provider ID');?>: <?php echo $orderDetails['uname']; ?>
+                    <?php echo xlt('NPI');?> : <?php echo $orderDetails['unpi']; ?>
+                </td>
+                <td class="borderOk" colspan="2">
+                    <table width="100%">
+                        <tr>
+                            <td><?php echo xlt('Responsible Party');?> : <br></td>
+                            <td></td>
+                            <td><?php echo xlt('Bill Type');?> :<br></td>
+                            <td>
+                                <?php
+                                $billType = ($orderDetails['billto'] == 'T') ? 'Insurance' :
+                                        (($orderDetails['billto'] == 'P') ? 'Patient' :
+                                                (($orderDetails['billto'] == 'C') ? 'Client' :
+                                                        ' '));
+                                echo $billType;
+                                ?>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td></td>
+                            <td></td>
+                            <td><?php echo xlt('SSN');?> :<br></td>
+                            <td><?php echo $orderDetails['subscriber_ss']; ?></td>
+                        </tr>
+                        <tr>
+                            <td></td>
+                            <td></td>
+                            <td><?php echo xlt('Relation');?> :<br></td>
+                            <td><?php echo $orderDetails['subscriber_relationship']; ?></td>
+                        </tr>
+                        <tr>
+                            <td><?php echo xlt('DOB');?> : <?php echo $orderDetails['subscriber_DOB']; ?><br></td>
+                            <td></td>
+                            <td><?php echo xlt('SEX');?> :<br></td>
+                            <td><?php echo $orderDetails['subscriber_sex']; ?></td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>  
+            <tr>
+                <td class="borderOk" colspan="4"><?php echo xlt('Reporting Comments');?> : <?php echo $orderDetails['return_comments']; ?></td>
+            </tr>
+            <tr>
+                <td class="borderOk" colspan="4"><?php echo xlt('Internal Comments');?> : <?php echo $orderDetails['internal_comments']; ?></td>
+            </tr>
+            <tr>
+                <td class="borderOk" colspan="2"><?php echo xlt('Insurance Address');?></td>
+                <td class="borderOk" colspan="2">
+                    <?php
+                    if ($orderDetails['billto'] == 'T') {
+                        echo $orderDetails['insname'] . '<br>';
+                        echo $orderDetails['line1'] . '<br>';
+                        echo $orderDetails['line2'] . '<br>';
+                        echo $orderDetails['inscity'] . '<br>';
+                        echo $orderDetails['insstate'] . '<br>';
+                        echo $orderDetails['zip'] . '<br>';
+                        echo $orderDetails['country'] . '<br>';
+                    }
+                    ?>
+                </td>
+            </tr>   
+        </table>
+        <br />
+        <div style="background-color: #000;text-align: center;font: small-caption  "><font color="white"><?php echo xlt('Profiles/Tests');?></font></div>
+        <table border="0" style="width: 100%"  cellpadding="2" cellspacing="2" class="local">
+            <tr>
+                <td class="tdHead"><?php echo xlt('Slno');?></td>   
+                <td class="tdHead"><?php echo xlt('Proc.Code');?></td>
+                <td class="tdHead"><?php echo xlt('Proc.Source');?></td>
+                <td class="tdHead"><?php echo xlt('Procedure Name');?></td>    
+                <td class="tdHead"><?php echo xlt('Diagnosis');?></td>
+                <td class="tdHead"><?php echo xlt('Patient Instructions');?></td>
+            </tr>
+            <?php
+            $i = 0;
+            foreach ($tests as $test) {
+                $i++;
+                ?>
+                <tr>
+                    <td><?php echo $i; ?></td>
+                    <td><?php echo $test['procedure_code']; ?></td>
+                    <td><?php echo $test['procedure_source']; ?></td>
+                    <td><?php echo $test['procedure_name']; ?></td>     
+                    <td><?php echo $test['diagnoses']; ?></td>
+                    <td><?php echo $test['patient_instructions']; ?></td>
+                </tr>
+            <?php } ?>       
+        </table>
+    </div>
+<?php } 
+elseif ($orderDetails['name'] == 'Dianon') {
+    ?>
+    <page backtop="48mm" backbottom="20mm" backleft="0mm" backright="0mm">
+        <page_header>   
+            <div id="header" style="margin-left: 30px;">
+                <table  style="width: 95%;" cellpadding="0" cellspacing="0">
+                    <tr>
+                        <td colspan="3" >
+                            <table style="width: 95%;" cellpadding="0" cellspacing="0"><tr>
+                                    <td style="text-align: right; width: 95%">
+                                        <?php echo xlt('Page');?> [[page_cu]] of [[page_nb]]
+                                    </td>
+                                </tr></table>
+
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="borderFade" style="width: 80px;height:90px;"></td>
+                        <td style="text-align: center;" align='center' style="width: 40%;">
+                            <p style="font-size:25px; margin-left: 50px;">
+                                DIANON<br>
+                                REQ<br>
+                                ZH Health Care
+                            </p>
+                        </td>
+                        <td style="width: 45%; text-align: left"><img src="<?php echo $img_name; ?>" width="220"></td>
+                    </tr>
+                    <tr>
+                        <td colspan="3">&nbsp;</td>       
+                    </tr>
+                    <tr>
+                        <td style="width: 25%;color: #CACACA;">DIANON</td>
+                        <td style="text-align: center; color: #CACACA;" align='center'>ZH Health Care REQ</td>
+                        <td style="width: 25%; color: #CACACA;" ></td>
+                    </tr>
+                </table>
+            </div>
+        </page_header>
+        <page_footer>
+            <div id="footer" style="margin-left: 30px;">
+                <table class="footerTable" style="width:95%;" border="1" cellpadding="0" cellspacing="0">
+                    <tr>
+                        <td class="footTd" width="25%;">&nbsp;</td>
+                        <td class="footTd" width="25%;">&nbsp;</td>
+                        <td class="footTd" width="25%;">&nbsp;</td>
+                        <td class="footTd" width="25%;">&nbsp;</td>
+                    </tr>
+                    <tr>
+                        <td class="footTd" >&nbsp;</td>
+                        <td class="footTd" >&nbsp;</td>
+                        <td class="footTd" >&nbsp;</td>
+                        <td class="footTd" >&nbsp;</td>
+                    </tr>     
+                </table>
+            </div>
+        </page_footer>
+        <div id="content" style="margin-left: 30px;">
+            <table style="width:95%; " cellpadding="0" cellspacing="0">
+                <tr>
+                    <td class="borderOk" style="width:100%; ">
+                        <table border="0" style="width:100%; " cellpadding="2" cellspacing="2">
+                            <tr>
+                                <td style="width:33%; "><?php echo xlt('Account');?> #: <?php echo $account_no; ?></td>
+                                <td style="width:33%; "><?php echo xlt('Collection Date');?>: <?php
+                                    $colD = explode(' ', $orderDetails['date_collected']);
+                                    echo $colD[0];
+                                    ?></td>
+                                <td style="width:33%; ">
+                                    <?php echo xlt('Specimen Type');?>: <?php ?>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td></td>
+                                <td><?php echo xlt('Collection Time');?>: <?php echo $colD[1]; ?></td>
+                                <td>
+                                    <?php echo xlt('Body site/Descriptor');?>: <?php ?>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><?php echo xlt('Req/Control');?> #:<?php echo $orderId; ?></td>
+                                <td><?php echo xlt('Courtesy Copy');?>:</td>
+                                <td><?php echo xlt('Acct');?># </td>
+                            </tr>
+                            <tr>
+                                <td></td>
+                                <td></td>
+                                <td><?php echo xlt('Fax');?># </td>
+                            </tr>
+                            <tr>
+                                <td></td>
+                                <td></td>
+                                <td><?php echo xlt('Patient');?> </td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+            </table>
+            <br />
+            <table style="width: 95%;" cellpadding="0" cellspacing="0">
+                <tr>
+                    <td class="borderOk"><?php echo xlt('Client / Ordering Site Information');?>:</td>
+                    <td class="borderOk"><?php echo xlt('Physician Information');?>:</td>
+                </tr>
+                <tr> 
+                    <td class="borderOk" style="width:50%; ">
+                        <table style="width:100%; " cellpadding="1" cellspacing="1">
+                            <tr>
+                                <td style="width:50%; "><?php echo xlt('Account Name');?>:</td>
+                                <td style="width:50%; "><?php echo $orderDetails['fcname']; ?></td>
+                            </tr>
+                            <tr>
+                                <td style="width:50%; "><?php echo xlt('Address 1');?>:</td>
+                                <td style="width:50%; "><?php echo $orderDetails['fcstreet']; ?></td>
+                            </tr>
+                            <tr>
+                                <td style="vertical-align: top" style="width:50%; "><?php echo xlt('Address 2');?> <br> <?php echo xlt('City, State Zip');?>:</td>
+                                <td style="width:50%; ">
+                                    <?php echo $orderDetails['fccity']; ?><br />    
+                                    <?php echo $orderDetails['fcstate']; ?><br />    
+                                    <?php echo $orderDetails['fcpost']; ?> 
+                                </td>
+                            </tr>         
+                            <tr>
+                                <td style="width:50%; "><?php echo xlt('Phone');?>:</td>
+                                <td style="width:50%; "> <?php echo $orderDetails['fcphone']; ?></td>
+                            </tr>
+                        </table>
+
+                    </td>
+                    <td class="borderOk" style="width:50%; ">
+                        <table style="width:100%; " cellpadding="1" cellspacing="1">
+                            <tr>
+                                <td style="width:50%; "><?php echo xlt('Ordering Physician');?>:</td>
+                                <td style="width:50%; "><?php echo $orderDetails['uname']; ?></td>
+                            </tr>
+                            <tr>
+                                <td style="width:50%; "><?php echo xlt('Physician Degree');?>:</td>
+                                <td style="width:50%; "></td>
+                            </tr>
+                            <tr>
+                                <td style="width:50%; "><?php echo xlt('NPI');?>:</td>
+                                <td style="width:50%; "><?php echo $orderDetails['unpi']; ?></td>
+                            </tr>
+                            <tr>
+                                <td style="width:50%; "><?php echo xlt('UPIN');?>:</td>
+                                <td style="width:50%; "><?php echo $orderDetails['uupin']; ?></td>
+                            </tr>
+                            <tr>
+                                <td style="width:50%; "><?php echo xlt('Physician ID');?>:</td>
+                                <td style="width:50%; "><?php echo $orderDetails['uid']; ?></td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+            </table>
+            <br />
+            <table style="width: 95%;" cellpadding="0" cellspacing="0">
+                <tr>
+                    <td colspan="2" class="borderOk"><?php echo xlt('Patient Information');?>:</td>
+                </tr>
+                <tr> 
+                    <td class="borderOk" style="width: 50%">
+                        <table style="width:100%; " cellpadding="1" cellspacing="1">
+                            <tr>
+                                <td style="width:50%; "><?php echo xlt('Patient Name');?>:</td>
+                                <td style="width:50%; "><?php echo $orderDetails['pname']; ?></td>
+                            </tr>
+                            <tr>
+                                <td style="width:50%; "><?php echo xlt('Gender');?>:</td>
+                                <td style="width:50%; "><?php echo $orderDetails['sex']; ?></td>
+                            </tr>
+                            <tr>
+                                <td style="width:50%; "><?php echo xlt('Date Of Birth');?>:</td>
+                                <td style="width:50%; "><?php echo $orderDetails['DOB']; ?></td>
+                            </tr>
+                            <tr>
+                                <td style="width:50%; "><?php echo xlt('Age');?></td>
+                                <td style="width:50%; "><?php echo $orderDetails['age']; ?></td>
+                            </tr>
+                            <tr>
+                                <td style="vertical-align: top" style="width:50%; "><?php echo xlt('Patient Address');?><br /><?php echo xlt('City, State, ZIP');?>:</td>
+                                <td style="width:50%; ">
+                                    <?php echo $orderDetails['street']; ?><br />
+                                    <?php echo $orderDetails['state']; ?><br />
+                                    <?php echo $orderDetails['city']; ?><br />
+                                    <?php echo $orderDetails['postal_code']; ?><br />
+                                </td>
+                            </tr>          
+                        </table>
+                    </td>
+                    <td class="borderOk" style="width: 50%">
+                        <table style="width:100%; " cellpadding="1" cellspacing="1">
+                            <tr>
+                                <td style="width:50%; "><?php echo xlt('Patient SSN');?>:</td>
+                                <td style="width:50%; "><?php echo $orderDetails['ss']; ?></td>
+                            </tr>
+                            <tr>
+                                <td style="width:50%; "><?php echo xlt('Patient ID');?>:</td>
+                                <td style="width:50%; "><?php echo $orderDetails['patient_id']; ?></td>
+                            </tr>
+                            <tr>
+                                <td style="width:50%; "><?php echo xlt('Phone');?>:</td>
+                                <td style="width:50%; "><?php echo $orderDetails['phone_home']; ?></td>
+                            </tr>
+                            <tr>
+                                <td style="width:50%; "></td>
+                                <td style="width:50%; "></td>
+                            </tr>
+                            <tr>
+                                <td style="width:50%; "><?php echo xlt('Alt Control');?> #:</td>
+                                <td style="width:50%; "></td>
+                            </tr>
+                            <tr>
+                                <td style="width:50%; "><?php echo xlt('Alt Patient ID');?>:</td>
+                                <td style="width:50%; "><?php echo $orderDetails['pubpid']; ?></td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+            </table>
+            <br />
+            <table style="width: 95%;" cellpadding="0" cellspacing="0">
+                <tr>
+                    <td class="borderO" style="text-align: center;height: 2px" style="width: 25%"><?php echo xlt('ORDER CODE');?></td>
+                    <td class="borderO" style="text-align: center;height: 2px" style="width: 25%"><?php echo xlt('TESTS ORDERED');?>  </td>
+                    <td class="borderO" style="text-align: center;height: 2px" style="width: 25%"><?php echo xlt('ORDER CODE');?></td>
+                    <td class="borderO" style="text-align: center;height: 2px" style="width: 23%"><?php echo xlt('TESTS ORDERED');?></td>        
+                </tr>
+                <tr><td class="borderO" style="width: 100%" colspan="4">
+                        <table width="100%" cellpadding="0" cellspacing="0">            
+                            <?php
+                            $i = 0;
+                            $cols = 2;
+                            $colNum = 0;
+                            $trOpened = false;
+                            $testArray = array();
+                            $diagArray = array();
+                            foreach ($tests as $test) {
+                                $testArray[$i] = $test;
+                                $diagArray[$i] = $test['diagnoses'];
+                                $i++;
+                            }
+                            for ($i = 0; $i <= ((count($testArray) / 2) + 1); $i+=2) {
+                                ?>
+                                <tr>
+                                    <td style="text-align: center;width:25%;"><?= $testArray[$i]['procedure_code'] ?></td>
+                                    <td style="text-align: center;width:25%;"><?= $testArray[$i]['procedure_name'] ?></td>
+                                    <td style="text-align: center;width:25%;"><?= $testArray[$i + 1]['procedure_code'] ?></td>
+                                    <td style="text-align: center;width:25%;"><?= $testArray[$i + 1]['procedure_name'] ?></td>
+                                </tr>
+                                <?php
+                            }
+                            ?> 
+                        </table>
+                    </td>
+                </tr>
+
+            </table>
+            <br />
+            <table style="width: 95%;" cellpadding="0" cellspacing="0">
+                <tr>
+                    <td class="borderOk" style="width: 40%"><?php echo xlt('Clinical Informations');?></td>
+                    <td class="borderOk" style="width:60%"><?php echo xlt('Additional Informations');?></td>
+                </tr>
+                <tr>
+                    <td class="borderOk" ></td>
+                    <td class="borderOk" >
+                        <table width="95%" cellpadding="1" cellspacing="1">
+                            <?php
+                            foreach ($aoes as $aoe) {
+                                if ($aoe['answer'] != '') {
+                                    ?>
+                                    <tr>
+                                        <td><?php echo $aoe['question_text']; ?>:</td>
+                                        <td><?php echo str_replace('~:~', ', ', $aoe['answer']); ?></td>
+                                    </tr>
+                                    <?php
+                                }
+                            }
+                            ?>
+                        </table>
+                    </td>
+                </tr>
+            </table>  
+            <br />
+            <table style="width: 95%;" cellpadding="0" cellspacing="0" class="print-friendly">
+                <tr>
+                    <td colspan="<?= count($diagArray); ?>" class="borderOk" style="width: 100%"><?php echo xlt('Diagnosis Codes:	List all applicable ICD-9 codes.  Must be at Highest Level Specificity');?>.</td>
+                </tr>
+                <tr>
+                    <?php for ($i = 0; $i < count($diagArray); $i++) { ?>
+                        <td class="borderOk"><?= $diagArray[$i]; ?></td>
+                    <?php } ?>       
+                </tr>
+            </table>
+            <br />
+            <table style="width: 95%;" cellpadding="0" cellspacing="0">
+                <tr>
+                    <td  class="borderOk" style="width: 50%">
+                        <?php echo xlt('Bill Type');?>:	 <?php
+                        $billType = ($orderDetails['billto'] == 'T') ? 'Insurance' :
+                                (($orderDetails['billto'] == 'P') ? 'Patient' :
+                                        (($orderDetails['billto'] == 'C') ? 'Client' :
+                                                ' '));
+                        echo $billType;
+                        ?>
+                    </td>
+                    <td  class="borderOk" style="width: 50%"><?php echo xlt('LCA Ins Code:	 (Primary Insurance Code)');?>: <?php echo $ins_code; ?></td>
+                </tr>
+            </table>
+            <br />
+            <table  style="width: 95%;" cellpadding="0" cellspacing="0">
+                <tr>
+                    <td class="borderOk" style="width: 100%"><?php echo xlt('Responsible Party / Guarantor Information');?>: </td>
+                </tr>
+                <tr>
+                    <td class="borderOk" style="width: 100%">
+                        <table>
+                            <tr><td style="width:45%;">  <?php echo xlt('RP Name');?> </td> <td style="width:10%;">:</td><td style="width:45%;"><?php echo $orderDetails['gtrsubsname']; ?></td></tr>
+                            <tr><td style="width:45%;">  <?php echo xlt('RP Address');?> </td> <td style="width:10%;">:</td><td style="width:45%;"><?php echo $orderDetails['gtrsubscriber_street']; ?><br>
+                                    <?php echo $orderDetails['gtrsubscriber_city']; ?><br>
+                                    <?php echo $orderDetails['gtrsubscriber_postal_code']; ?><br>
+                                    <?php echo $orderDetails['gtrsubscriber_state']; ?><br /></td></tr>    
+                            <tr><td style="width:45%;">  <?php echo xlt('RP Phone');?>  </td> <td style="width:10%;">:</td><td style="width:45%;"><?php echo $orderDetails['gtrsubscriber_phone']; ?></td></tr>    
+                            <tr><td style="width:45%;">  <?php echo xlt('RP Relation to Pt');?></td> <td style="width:10%;">:</td><td style="width:45%;"><?php echo $orderDetails['gtrsubscriber_relationship']; ?></td></tr>    
+                        </table>   
+
+                    </td>
+                </tr>
+            </table>
+            <br />
+            <table style="width: 95%;" cellpadding="0" cellspacing="0">
+                <tr>
+                    <td class="borderOk" style="width: 30%"><?php echo xlt('ABN');?>:	</td>
+                    <td class="borderOk" style="width: 30%"><?php echo xlt("Worker's Comp");?>:	<?php echo ($orderDetails['freeb_type'] == 25) ? 'Y' : 'N'; ?></td>
+                    <td class="borderOk" style="width: 40%"><?php echo xlt('Date of Injury');?>:	</td>
+                </tr>
+            </table>
+            <?php if ($orderDetails['billto'] == 'T') { ?>
+                <br />
+                <table style="width: 95%;" cellpadding="0" cellspacing="0">
+                    <tr>
+                        <td style="width: 50%;" class="borderOk"><?php echo xlt('Insurance Information');?>:</td>
+                        <td style="width: 50%;" class="borderOk"><?php echo xlt('Hospital Status');?>:  <?php echo xlt('(In-Pt / Out-Pt / Non-Pt)');?></td>
+                    </tr>
+                    <tr>
+                        <td class="borderOk"><?php echo xlt('Primary Insurance');?>:  </td>
+                        <td class="borderOk"><?php echo xlt('Secondary Insurance');?>:  </td>
+                    </tr>
+                    <tr> 
+                        <td class="borderOk" style="width: 50%;text-align: left;">
+
+                            <?php echo xlt('LCA Ins Code');?> : <?php echo $ins_code; ?><br><br>
+                            <?php echo xlt('Ins Co Name');?> : <?php echo $orderDetails['insname']; ?><br><br>
+                            <?php echo xlt('Ins Address 1');?> : <?php echo $orderDetails['line1']; ?><br><br>
+                            <?php echo xlt('Ins Address 2');?> : <?php echo $orderDetails['line2']; ?><br><br>
+                            <?php echo xlt('Ins City, State Zip');?>	: <?php echo $orderDetails['inscity'] . ', ' . $orderDetails['insstate'] . ', ' . $orderDetails['zip']; ?><br><br>
+                            <?php echo xlt('Policy Number');?> : <?php echo $orderDetails['policy_number']; ?><br><br>
+                            <?php echo xlt('Group');?> # : <?php echo $orderDetails['group_number']; ?><br><br>
+                            <?php echo xlt('Emp/Group Name');?> : <?php echo $orderDetails['subscriber_employer']; ?><br><br>
+                            <?php echo xlt('Provider');?> # : <?php echo $orderDetails['cms_id']; ?><br><br>
+
+                        </td>
+                        <td class="borderOk" style="width: 50%">
+
+                            <?php echo xlt('LCA Ins Code');?> : <?php echo $ins_codeSec; ?><br><br>
+                            <?php echo xlt('Ins Co Name');?> : <?php echo $orderDetails['secinsname']; ?><br><br>
+                            <?php echo xlt('Ins Address 1');?> : <?php echo $orderDetails['secline1']; ?><br><br>
+                            <?php echo xlt('Ins Address 2');?> : <?php echo $orderDetails['secline2']; ?><br><br>
+                            <?php echo xlt('Ins City, State Zip');?> : <?php echo $orderDetails['secinscity'] . ', ' . $orderDetails['secinsstate'] . ', ' . $orderDetails['seczip']; ?><br><br>
+                            <?php echo xlt('Policy Number');?> : <?php echo $orderDetails['secpolicy_number']; ?><br><br>
+                            <?php echo xlt('Group');?> # : <?php echo $orderDetails['secgroup_number']; ?><br><br>
+                            <?php echo xlt('Emp/Group Name');?> : <br><br>
+                            <?php echo xlt('Provider');?> # : <br><br>          
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="borderOk" ><?php echo xlt('Primary Policy Holder / Insured');?>:</td>
+                        <td class="borderOk"><?php echo xlt('Secondary Policy Holder / Insured');?>:</td>
+                    </tr>
+                    <tr>
+                        <td class="borderOk">
+                            <table>
+                                <tr><td style="width:45%;">  <?php echo xlt('Insured Name');?></td> <td style="width:10%;">:</td><td style="width:45%;"><?php echo $orderDetails['subsname']; ?></td></tr>
+                                <tr><td style="width:45%;">  <?php echo xlt('Insured Address');?></td> <td style="width:10%;">:</td><td style="width:45%;"><?php echo $orderDetails['subscriber_street']; ?><br>
+                                        <?php echo $orderDetails['subscriber_city']; ?><br>
+                                        <?php echo $orderDetails['subscriber_postal_code']; ?><br>
+                                        <?php echo $orderDetails['subscriber_state']; ?><br></td></tr>    
+                                <tr><td style="width:45%;">  <?php echo xlt('Insured Relation to Pt');?></td> <td style="width:10%;">:</td><td style="width:45%;"><?php echo $orderDetails['subscriber_relationship']; ?></td></tr>  
+                            </table>      
+                        </td>
+                        <td class="borderOk">
+                            <table >
+                                <tr><td style="width:45%;">  <?php echo xlt('Insured Name');?></td> <td style="width:10%;">:</td><td style="width:45%;"><?php echo $orderDetails['secsubsname']; ?></td></tr>
+                                <tr><td style="width:45%;">  <?php echo xlt('Insured Address');?></td> <td style="width:10%;">:</td><td style="width:45%;"><?php echo $orderDetails['secsubscriber_street']; ?><br>
+                                        <?php echo $orderDetails['secsubscriber_city']; ?><br>
+                                        <?php echo $orderDetails['secsubscriber_postal_code']; ?><br>
+                                        <?php echo $orderDetails['secsubscriber_state']; ?><br></td></tr>    
+                                <tr><td style="width:45%;">  <?php echo xlt('Insured Relation to Pt');?></td> <td style="width:10%;">:</td><td style="width:45%;"><?php echo $orderDetails['secsubscriber_relationship']; ?></td></tr>  
+                            </table> 
+                        </td>
+                    </tr>
+                </table>
+            <?php } ?>
+            <br />
+            <table border="0" style="width: 95%;" cellpadding="0" cellspacing="0">
+                <tr>
+                    <td colspan="2" style="width: 100%;"><?php echo xlt('Authorization - Please sign and Date
+                        I hereby authorize the release of medical information related to the services described here on and authorize payment directly to Laboratory Corporation of America');?>.
+                    </td>
+                </tr>
+                <tr>
+                    <td>____________________________<br /> 
+                        <?php echo xlt('Patient Signature');?>						
+                    </td>
+                    <td>____________________________<br />   
+                        <?php echo xlt('Date');?>						
+                    </td>
+                </tr>   
+                <tr>
+                    <td>____________________________<br />   
+                        <?php echo xlt('Physician/Authorized Signature');?>						
+                    </td>
+                    <td>____________________________<br />   
+                        <?php echo xlt('Date');?>						
+                    </td>
+                </tr>
+            </table>  
+        </div>
+    </page>
+<?php } 
+elseif ($orderDetails['name'] == 'Labcorp') {
+    ?>
+    <?php
+    $spmCntaaa = 0;
+    foreach ($tests as $testa) {
+        if ($testa['specimen_details']) {
+            $spmCntaaa = $spmCntaaa + 1;
+        }
+    }
+    $aoeArray = array();
+    $totCnt = 1;
+    foreach ($aoes as $aoe) {
+        $dupeCheck = 0;
+        if ($aoe['answer'] != '') {
+            if (substr($aoe['hl7_segment'], 0, 3) == 'ZCY') {
+                $aoeText = explode(':', $aoe['question_text']);
+                foreach ($aoeArray as $akey => $aoeAns) {
+                    $aoeTextSub = explode(':', $aoeAns['question_text']);
+                    if ($aoeText[0] == $aoeTextSub[0]) {
+                        $dupeCheck = 1;
+                        $aoeArray[$akey]['question_text'] = $aoeArray[$akey]['question_text'] . ', ' . $aoeText[1];
+                        break;
+                    }
+                }
+                if (!$dupeCheck) {
+                    array_push($aoeArray, $aoe);
+                }
+            } else if (substr($aoe['hl7_segment'], 0, 5) == 'ZSA25' || substr($aoe['hl7_segment'], 0, 5) == 'ZSA26') {
+                if ($aoe['answer'] != 'N') {
+                    array_push($aoeArray, $aoe);
+                }
+            } else {
+                array_push($aoeArray, $aoe);
+            }
+        }
+    }
+    $totAoeCnt = 0;
+    foreach ($aoeArray as $aoe) {
+        if ($aoe['answer'] != '') {
+            $totAoeCnt++;
+        }
+    }
+    ?>
+    <page backtop="51mm" backbottom="30mm" backleft="7mm" backright="0mm">  
+        <?php //if ($orderDetails['billto'] == 'T' || $TotalCount > 3 || $extBarCodeCheck) {
+        ?>
+        <page_header>   
+            <div id="header" >
+                <table style="width: 100%;margin-left: 30px;" cellpadding="0" cellspacing="0">
+                    <tr>
+                        <td colspan="2" >
+                            <table style="width: 80%;" cellpadding="0" cellspacing="0"><tr>
+                                    <td style="text-align: right; width: 100%">
+                                        <?php echo xlt('Page');?> [[page_cu]] of [[page_nb]]
+                                    </td>
+                                </tr></table>
+
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="width: 50%; vertical-align: bottom">
+                            <table style="width: 100%;" cellpadding="0" cellspacing="0">
+                                <tr>
+                                    <td style="text-align: right;width: 25%;" ><?php echo xlt('Account Number');?>:</td>
+                                    <td style="text-align: left;width: 25%;" >&nbsp;&nbsp;<?php echo $account_no; ?></td>       
+                                    <td style="text-align: right;width: 25%;" ><?php echo xlt('Patient Name');?>:</td>
+                                    <td style="text-align: left;width: 25%;" >&nbsp;&nbsp;<?php echo preg_replace('/\s+/', ', ', trim($orderDetails['pname'])); ?></td>         
+                                </tr>
+                                <tr>
+                                    <td style="text-align: right;" ><?php echo xlt('Req/Control');?>#:</td>
+                                    <td style="text-align: left;" >&nbsp;&nbsp;<?php echo $orderId; ?></td>       
+                                    <td style="text-align: right;" ><?php echo xlt('Patient ID');?>:</td>
+                                    <td style="text-align: left;" >&nbsp;&nbsp;<?php echo $orderDetails['patient_id']; ?></td>
+                                </tr>
+                                <tr>
+                                    <td style="text-align: right;" ><?php echo xlt('Collection Date & Time');?>:</td>
+                                    <td style="text-align: left;" >&nbsp;&nbsp;<?php echo $orderDetails['date_collected']; ?></td>       
+                                    <td style="text-align: right;" ><?php echo xlt('Alt Pat ID');?>:</td>
+                                    <td style="text-align: left;" >&nbsp;&nbsp;<?php echo $orderDetails['pubpid']; ?></td>
+                                </tr>
+                            </table>      
+                        </td>      
+                        <td  style="width: 50%; text-align: left" ><img width="292" height="160" src="<?php echo $img_name; ?>"> </td>      
+                    </tr>
+                </table>
+            </div>
+        </page_header>   
+        <?php //} ?>
+        <page_footer>
+            <?php $colD = explode(' ', $orderDetails['date_collected']);
+            ; ?>
+            <div id="footer" style="margin-left: 30px;">
+                <table class="footerTable" style="width:92%;" border="1" cellpadding="0" cellspacing="0">
+                    <tr> <?php for ($cnt = 1; $cnt <= 8; $cnt++) { ?>
+                            <td  class="footTd" style="width: 25%">
+                                <table style="width: 100%"><tr><td colspan="2" ><?php echo $orderDetails['lname'] . ' ' . $orderDetails['fname']; ?></td></tr>
+                                    <tr> <td  width="50%;"><?php echo $orderDetails['DOB']; ?></td>
+                                        <td  width="50%;"><?php echo $colD[0] //.' '. $colD[1];   ?></td>  </tr>   
+                                    <tr> <td  ><?php echo $account_no; ?></td>
+                                        <td  ><?php echo $orderId; ?></td>  </tr> </table>
+                            </td>
+                            <?php
+                            if ($cnt == 4) {
+                                echo '</tr><tr>';
+                            }
+                        }
+                        ?> </tr>
+                </table>
+            </div>   
+        </page_footer> 
+        <page_footer>  </page_footer>
+        <!--      <div id="content" style="margin-top: -180px;">-->
+        <table style="width:98%;margin-top: -190px; background-color: #FFF" cellpadding="0" cellspacing="0">
+            <tr>
+                <td colspan="3">
+                    <table style="width: 90%;" cellpadding="0" cellspacing="0"><tr>
+                            <td style="text-align: right; width: 100%">
+                                <?php echo xlt('Page 1 of');?> [[page_nb]]
+                            </td>
+                        </tr></table>
+                </td>
+            </tr>
+            <tr>
+                <td  style="width: 16%;"></td>
+                <td style="text-align: center;width: 40%;" align='center'>
+                    <p style="font-size: 25px;padding: 10px;">
+                        LabCorp<br>
+                        <?php if ($orderDetails['cor'] == 'Yes') { ?>
+                            COR EDI
+                        <?php } else { ?>
+                            EREQ
+                        <?php } ?>
+                        <br>
+                        ZH Health Care
+                    </p>
+                </td>                
+                <td style="width: 44%;"> 
+                    <img width="292" height="160" src="<?php echo $img_name; ?>">            
+                </td>
+            </tr>      
+      <!--      <tr>
+              <td>Labcorp&#174;</td>
+              <td align='center'>EREQ ZH Health Care</td>
+              <td class="page"></td>
+            </tr>-->
+        </table>   
+        <table style="width:94.5%;" >
+            <tr>
+                <td class="borderOk">
+                    <table border="0" style="width:100%;">
+                        <tr>
+                            <td style="width: 50%;" ><?php echo xlt('Account');?> #: <?php echo $account_no; ?></td>
+                            <td style="width: 50%;"><?php echo xlt('Collection Date');?>: <?php
+                                $colD = explode(' ', $orderDetails['date_collected']);
+                                echo $colD[0];
+                                ?>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="width: 50%;"></td>
+                            <td style="width: 50%;"><?php echo xlt('Collection Time');?>: <?php echo $colD[1]; ?></td>
+                        </tr>
+                        <tr>
+                            <td style="width: 50%;"><?php echo xlt('Req/Control');?> #:<?php echo $orderId; ?></td>
+                            <td style="width: 50%;"><?php echo xlt('Courtesy Copy');?>: 
+                                <?php
+                                if ($orderDetails['courtesy_copy']) {
+                                    $cortsArr = explode('@@##', $orderDetails['courtesy_copy']);
+                                    foreach ($cortsArr as $corts3) {
+                                        if ($checkVar == 1) {
+                                            echo '; ';
+                                        }
+                                        $corts = explode('#@#', $corts3);
+                                        if ($corts[0] == 'P') {
+                                            $checkVar = 1;
+                                            echo 'Patient'; 
+                                        } else {
+                                            $corts1 = explode('@#@', $corts[1]);
+                                            if ($corts[0] == 'F') {
+                                                $checkVar = 1;
+                                                echo 'Fax: ' . $corts1[0] . ', ' . $corts1[1];
+                                            } else if ($corts[0] == 'A') {
+                                                $checkVar = 1;
+                                                echo 'Account: ' . $corts1[0];
+                                            }
+                                        }
+                                    }
+                                    ?>
+
+    <?php } ?>
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+        </table>  
+        <table style="width:96%;">
+            <tr>
+                <td class="borderOk" style="width: 50%;"><?php echo xlt('Client / Ordering Site Information');?>:</td>
+                <td class="borderOk" style="width: 50%;"><?php echo xlt('Physician Information');?>:</td>
+            </tr>
+            <tr> 
+                <td class="borderOk" style="width: 50%;">
+                    <pre class="labcorpPre"  style="line-height: 7px;"><?php echo xlt('Account Name');?>    : <?php echo preg_replace('/\s+/', ', ', trim($orderDetails['fcname'])); ?><br />
+<?php echo xlt('Address 1');?>       : <?php echo $orderDetails['fcstreet']; ?><br />
+<?php echo xlt('City, State');?>     : <?php echo $orderDetails['fccity']; ?>, <?php echo $orderDetails['fcstate']; ?><br /> 
+<?php echo xlt('Zip');?>             : <?php echo $orderDetails['fcpost']; ?><br /> 
+<?php echo xlt('Phone');?>           : <?php echo $orderDetails['fcphone']; ?></pre>          
+            </td>
+            <td class="borderOk" style="width: 50%; vertical-align: text-top">
+                <pre class="labcorpPre"  style="line-height: 7px;"><?php echo xlt('Ordering Physician');?>  : <?php echo preg_replace('/\s+/', ', ', trim($orderDetails['uname'])); ?><br />
+<?php echo xlt('NPI');?>                 : <?php echo $orderDetails['unpi']; ?><br />
+<?php echo xlt('UPIN');?>                : <?php echo $orderDetails['uupin']; ?><br />
+<?php echo xlt('Physician ID');?>        : <?php echo $orderDetails['uid']; ?></pre>
+                </td>
+            </tr>
+        </table>    
+        <table style="width: 96%;" >     
+            <tr>
+                <td colspan="2" class="borderOk"><?php echo xlt('Patient Information');?>:</td>
+            </tr>
+            <tr> 
+                <td class="borderOk" style="width: 50%">
+                    <pre class="labcorpPre"  style="line-height: 7px;"><?php echo xlt('Patient Name');?>    : <?php echo preg_replace('/\s+/', ', ', trim($orderDetails['pname'])); ?><br />
+<?php echo xlt('Gender');?>          : <?php echo $orderDetails['sex']; ?><br />
+<?php echo xlt('Date Of Birth');?>   : <?php echo $orderDetails['DOB']; ?><br />
+<?php echo xlt('Age');?>             : <?php echo $orderDetails['age']; ?><br />
+<?php echo xlt('Address');?>         : <?php echo $orderDetails['street']; ?><br />
+<?php echo xlt('City, State');?>     : <?php echo $orderDetails['city']; ?>, <?php echo $orderDetails['state']; ?><br />
+<?php echo xlt('Zip');?>             : <?php echo $orderDetails['postal_code']; ?></pre>     
+            </td>
+            <td class="borderOk" style="width: 50%;vertical-align: text-top">
+<pre class="labcorpPre"  style="line-height: 7px;"><?php echo xlt('Patient SSN');?>     : <?php if ($orderDetails['ss']) {
+                    echo 'XXX-XX-' . substr($orderDetails['ss'], -4);
+                } ?><br />
+<?php echo xlt('Patient ID');?>      : <?php echo $orderDetails['patient_id']; ?><br />
+<?php echo xlt('Phone');?>           : <?php echo $orderDetails['phone_home']; ?><br />
+<?php echo xlt('Alt Patient ID');?>  : <?php echo $orderDetails['pubpid']; ?></pre> 
+                </td>
+            </tr>
+        </table>   
+        <table style="width: 96%;">
+            <tr><td class="borderO" style="width: 100%;">
+                    <table style="width: 100%;">
+                        <tr>
+                            <?php
+                            if (count($tests) > 1) {
+                                $width = '25%';
+                            } else {
+                                $width = '50%';
+                            }
+                            ?>  
+                            <td class="borderOk" style="text-align: center;height: 2px;width: <?php echo $width; ?>;"><?php echo xlt('ORDER CODE');?></td>
+                            <td class="borderOk" style="text-align: center;height: 2px;width: <?php echo $width; ?>;"><?php echo xlt('TESTS ORDERED');?>  </td>
+                        <?php if (count($tests) > 1) { ?>
+                                <td class="borderOk" style="text-align: center;height: 2px;width: <?php echo $width; ?>;"><?php echo xlt('ORDER CODE');?></td>
+                                <td class="borderOk" style="text-align: center;height: 2px;width: <?php echo $width; ?>;"><?php echo xlt('TESTS ORDERED');?></td> 
+                        <?php } ?>
+                        </tr>
+                        <?php
+                        $i = 0;
+                        $cols = 2;
+                        $colNum = 0;
+                        $trOpened = false;
+                        $testArray = array();
+                        $diagArray = array();
+                        foreach ($tests as $test) {
+                            $testArray[$i] = $test;
+                            $diagArray[$i] = $test['diagnoses'];
+                            $i++;
+                        }
+                        echo '<tr>';
+                        $cnt = 1;
+                        $spmCnt = 0;
+                        foreach ($testArray as $data) {
+                            if ($data['specimen_details']) {
+                                $spmCnt = $spmCnt + 1;
+                            }
+                            ?>              
+                            <td  style="text-align: center; height: 13px;"><?= $data['procedure_code'] ?></td>
+                            <td  style="text-align: center"><?= $data['procedure_name'] ?></td> 
+                            <?php
+                            if ($cnt % 2 == 0) {
+                                echo "</tr><tr>";
+                            }
+                            $cnt++;
+                        }
+                        ?> 
+            </tr>
+        </table>
+    </td>
+    </tr>
+    </table>    
+    <?php if ($spmCnt) { ?> 
+        <!-- Specimen Details        -->
+        <table style="width: 96%;">
+            <tr><td class="borderO"  style="width: 100%;">
+                    <table style="width: 100%;">
+
+                        <tr>
+                            <?php
+                            $cntSpm = 1;
+                            $tbWidth = "50%";
+                            foreach ($tests as $testSpm) {
+                                if ($testSpm['specimen_details']) {
+                                    $spmArr =  explode('#$@$#',$testSpm['specimen_details']);
+                                    foreach($spmArr as $spmGroup){
+                                    $spm = explode('@~#~@',$spmGroup);                                   
+                                    $spm1 = explode('@|@', $spm[0]);
+                                    $spm2 = explode('#@!#@', $spm[1]);
+                                    $spm3 = explode('~~', $spm2[0]);
+                                    $spm4 = explode('~~', $spm2[1]);
+                                    $spm5 = explode('~~', $spm2[2]);
+                                    $SpecimenText = 'Body Site: ' . $testSpm['procedure_code'] . ' - ' . $testSpm['procedure_name'];
+                                    ?>
+                                    <td class="borderO" style="width:<?php echo $tbWidth; ?>; " >
+                                        <table style="width:100%;">
+                                            <tr> <td colspan="3" style="width: 100%; border-bottom: 1px solid #000"><?php echo $SpecimenText; ?> </td></tr>
+                                            <tr>
+                                                <td style="width: 20%;" >
+                                                    Part <?php echo $spm1[0]; ?>
+                                                </td>
+                                                <td style="width: 30%;" >
+                <?php echo $spm1[2]; ?>
+                                                </td>
+                                                <td style="width: 50%;" >
+                <?php echo $spm1[1]; ?>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td>  
+                                                    &nbsp;
+                                                </td>                
+                                                <td>
+                <?php echo $spm3[1]; ?>
+                                                </td>                
+                                                <td  >
+                <?php echo $spm3[0]; ?>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td>  
+                                                    &nbsp;
+                                                </td>                
+                                                <td>
+                <?php echo $spm4[1]; ?>
+                                                </td>                
+                                                <td  >
+                <?php echo $spm4[0]; ?>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td>  
+                                                    &nbsp;
+                                                </td>                
+                                                <td>
+                <?php echo $spm5[1]; ?>
+                                                </td>                
+                                                <td  >
+                <?php echo $spm5[0]; ?>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td>  
+                                                    Description
+                                                </td>                
+                                                <td colspan="2">
+                                    <?php echo $spm[2]; ?>
+                                                </td>
+                                            </tr>
+                                        </table> 
+                                    </td>
+
+                                    <?php
+                                    if (!($cntSpm % 2)) {
+                                        $enter == 1;
+                                        echo '</tr>';
+                                        if ($cntSpm != $spmCnt) {
+                                            echo '<tr>';
+                                        }
+                                        $tbWidth = "50%";
+                                    } else {
+                                        $enter = 0;
+                                        $tbWidth = "49%";
+                                    }
+                                    $cntSpm = $cntSpm + 1;
+                                }
+                            }
+                            }
+                            if ($spmCnt % 2) {
+                                echo '<td  style="width: 50%;">&nbsp;</td> </tr> ';
+                            } else if ($enter == 1) {
+                                echo '</tr> ';
+                            }
+                            ?>  
+
+                    </table> </td></tr></table>
+                <?php } ?> 
+  <!--#######################  Clinical Information:################################-->
+  <?php 
+  if(count($aoeMasterArray['clincal']) || $orderDetails['internal_comments']){
+      $grpAoeCnt = count($aoeMasterArray['clincal']);
+      $rowCnt =1;
+      $enterSecond = 0;
+      ?>
+  <table style="width: 96%;"  >
+            <tr><td class="borderOk" style="width: 100%;" colspan="2"><b><?php echo xlt('Clincal Information');?>:</b></td></tr>           
+            <tr><td class="borderOk" style="width: 50%;vertical-align: text-top"><table style="width: 100%;">
+    <?php
+       foreach ($aoeMasterArray['clincal'] as $aoe) { 
+            echo '<tr><td style="width: 100%; height: 13px; " >'; 
+            echo $aoe['question'] .' : '.$aoe['answer']; 
+            echo '</td></tr>';    
+            if (($grpAoeCnt / 2) <= $rowCnt && $enterSecond != 1) {
+                $enterSecond = 1;
+                echo '</table></td><td style="width: 50%;vertical-align: text-top" class="borderOk" ><table style="width: 100%">';
+            }
+            $rowCnt++;
+       }
+       if($orderDetails['internal_comments']){
+       echo '<tr><td style="width: 100%; height: 13px; " >'; 
+            echo $orderDetails['internal_comments'] ; 
+            echo '</td></tr>'; 
+        } ?>
+     </table> </td> </tr></table>                  
+  <?php } ?>
+  <!--#######################  Additional Information:################################-->
+  <?php
+     if(count($aoeMasterArray['addInfo'])){
+      $grpAoeCnt = count($aoeMasterArray['addInfo']);
+      $rowCnt =1;
+      $enterSecond = 0;
+      ?>
+  <table style="width: 96%;"  >
+            <tr><td class="borderOk" style="width: 100%;" colspan="2"><b><?php echo xlt('Additional Information');?>:</b></td></tr>           
+            <tr><td class="borderOk" style="width: 50%;vertical-align: text-top"><table style="width: 100%;">
+    <?php
+       foreach ($aoeMasterArray['addInfo'] as $aoe) { 
+            echo '<tr><td style="width: 100%; height: 13px; " >'; 
+            echo $aoe['question'] .' : '.$aoe['answer']; 
+            echo '</td></tr>';    
+            if (($grpAoeCnt / 2) <= $rowCnt && $enterSecond != 1) {
+                $enterSecond = 1;
+                echo '</table></td><td style="width: 50%;vertical-align: text-top" class="borderOk" ><table style="width: 100%">';
+            }
+            $rowCnt++;
+       }
+       ?>
+     </table> </td> </tr></table>                  
+  <?php } ?>
+  <!--#######################Biometric Information: ################################-->
+    <?php if ($orderDetails['waist'] > 0 || $orderDetails['bps'] > 0 || $orderDetails['bpd'] > 0) { ?>  
+        <table style="width: 96%;"  >
+            <tr><td class="borderOk" style="width: 100%;" colspan="2"><b><?php echo xlt('Biometric Information');?>:</b></td></tr>
+            <tr><td class="borderOk" style="width: 50%;">
+                     <?php echo xlt('Waist (inches)');?> : <?php echo $orderDetails['waist']; ?>
+            </td> 
+            <td class="borderOk" style="width: 50%;">               
+             <?php echo xlt('Blood Pressure');?> :  <?php echo $orderDetails['bps'] . '/' . $orderDetails['bpd']; ?>  </td></tr>                
+        </table>
+    <?php } ?>
+  <!--#######################Micro/Histo Information: ################################-->
+  <?php
+  if(count($aoeMasterArray['micro'])){
+      $grpAoeCnt = count($aoeMasterArray['micro']);
+      $rowCnt =1;
+      $enterSecond = 0;
+      ?>
+  <table style="width: 96%;"  >
+            <tr><td class="borderOk" style="width: 100%;" colspan="2"><b><?php echo xlt('Micro/Histo Information');?>:</b></td></tr>           
+            <tr><td class="borderOk" style="width: 50%;vertical-align: text-top"><table style="width: 100%;">
+    <?php
+       foreach ($aoeMasterArray['micro'] as $aoe) { 
+            echo '<tr><td style="width: 100%; height: 13px; " >'; 
+            echo $aoe['question'] .' : '.$aoe['answer']; 
+            echo '</td></tr>';    
+            if (($grpAoeCnt / 2) <= $rowCnt && $enterSecond != 1) {
+                $enterSecond = 1;
+                echo '</table></td><td style="width: 50%;vertical-align: text-top" class="borderOk" ><table style="width: 100%">';
+            }
+            $rowCnt++;
+       }
+       ?>
+     </table> </td> </tr></table>                  
+  <?php } ?>
+  <!--#######################Blood Lead Information: ################################-->
+  <?php
+  if(count($aoeMasterArray['bloodLead'])){
+      $grpAoeCnt = count($aoeMasterArray['bloodLead']);
+      $rowCnt =1;
+      $enterSecond = 0;
+      ?>
+  <table style="width: 96%;"  >
+            <tr><td class="borderOk" style="width: 100%;" colspan="2"><b><?php echo xlt('Blood Lead Information');?>:</b></td></tr>           
+            <tr><td class="borderOk" style="width: 50%;vertical-align: text-top"><table style="width: 100%;">
+    <?php
+       foreach ($aoeMasterArray['bloodLead'] as $aoe) { 
+            echo '<tr><td style="width: 100%; height: 13px; " >'; 
+            echo $aoe['question'] .' : '.$aoe['answer']; 
+            echo '</td></tr>';    
+            if (($grpAoeCnt / 2) <= $rowCnt && $enterSecond != 1) {
+                $enterSecond = 1;
+                echo '</table></td><td style="width: 50%;vertical-align: text-top" class="borderOk" ><table style="width: 100%">';
+            }
+            $rowCnt++;
+       }
+       ?>
+     </table> </td> </tr></table>                  
+  <?php } ?>
+  <!--#######################Cytology Information: ################################-->
+   <?php 
+  if(count($aoeMasterArray['cytology'])){
+      $grpAoeCnt = count($aoeMasterArray['cytology']);
+      $rowCnt =1;
+      $enterSecond = 0;
+      ?>
+  <table style="width: 96%;"  >
+            <tr><td class="borderOk" style="width: 100%;" colspan="2"><b><?php echo xlt('Cytology Information');?>:</b></td></tr>           
+            <tr><td class="borderOk" style="width: 50%;vertical-align: text-top"><table style="width: 100%;">
+    <?php
+       foreach ($aoeMasterArray['cytology'] as $aoe) { 
+            echo '<tr><td style="width: 100%; height: 13px; " >'; 
+            echo $aoe['question'] .' : '.$aoe['answer']; 
+            echo '</td></tr>';    
+            if (($grpAoeCnt / 2) <= $rowCnt && $enterSecond != 1) {
+                $enterSecond = 1;
+                echo '</table></td><td style="width: 50%;vertical-align: text-top" class="borderOk" ><table style="width: 100%">';
+            }
+            $rowCnt++;
+       }
+       ?>
+     </table> </td> </tr></table>                  
+  <?php } ?>  
+  <!--#######################AFP Information: ################################-->
+  <?php 
+  if(count($aoeMasterArray['afp'])){
+      $grpAoeCnt = count($aoeMasterArray['afp']);
+      $rowCnt =1;
+      $enterSecond = 0;
+      ?>
+  <table style="width: 96%;"  >
+            <tr><td class="borderOk" style="width: 100%;" colspan="2"><b><?php echo xlt('AFP Information');?>:</b></td></tr>           
+            <tr><td class="borderOk" style="width: 50%;vertical-align: text-top"><table style="width: 100%;">
+    <?php
+       foreach ($aoeMasterArray['afp'] as $aoe) { 
+            echo '<tr><td style="width: 100%; height: 14px; " >'; 
+            echo $aoe['question'];
+            if($aoe['answer']) echo ' : '.$aoe['answer']; 
+            echo '</td></tr>';    
+            if (($grpAoeCnt / 2) <= $rowCnt && $enterSecond != 1) {
+                $enterSecond = 1;
+                echo '</table></td><td style="width: 50%;vertical-align: text-top" class="borderOk" ><table style="width: 100%">';
+            }
+            $rowCnt++;
+       }
+       ?>
+     </table> </td> </tr></table>                  
+  <?php } ?> 
+  
+  
+    <?php
+    if ($totAoeCnt && 1==2) {
+        ?>
+        <table style="width: 96%;"  >
+            <tr>
+        <!--        <td class="borderOk" colspan="2" style="width: 100%">Clinical Informations</td>-->
+                <td  colspan="2" class="borderOk" style="width: 100%; text-align: center"><?php echo xlt('Additional Informations');?></td>
+            </tr>
+            <tr><td style="width: 50%" class="borderOk">
+                    <table style="width: 100%;">
+                        <?php
+                        foreach ($aoeArray as $aoe) {
+                            if ($aoe['answer'] != '') {
+                                if (substr($aoe['hl7_segment'], 0, 3) == 'ZCY') {
+                                    if ($aoe['answer'] == 'N') {
+                                        continue;
+                                    }
+                                } else if (substr($aoe['hl7_segment'], 0, 5) == 'ZSA25' || substr($aoe['hl7_segment'], 0, 5) == 'ZSA26' || substr($aoe['hl7_segment'], 0, 4) == 'ZSA4' || substr($aoe['hl7_segment'], 0, 4) == 'ZSA5' || substr($aoe['hl7_segment'], 0, 5) == 'ZSA3.') {
+                                    if ($aoe['answer'] == 'N') {
+                                        // $totAoeCnt = $totAoeCnt-1;
+                                        continue;
+                                    }
+                                }
+                                ?>
+                                <tr>              
+                                    <td style="width: 100%; height: 13px;vertical-align: middle" ><?php
+                                        $zcyAns = '';
+                                        if (substr($aoe['hl7_segment'], 0, 3) == 'ZCY' && $aoe['hl7_segment'] != 'ZCY12' && substr($aoe['hl7_segment'], 0, 5) != 'ZSA25' && substr($aoe['hl7_segment'], 0, 5) != 'ZSA26') {
+                                            $qstnArr = explode(':', $aoe['question_text']);
+                                            echo $qstnArr[0]; // $aoe['question_text']; 
+                                            $zcyAns = $qstnArr[1];
+                                        } else if (substr($aoe['hl7_segment'], 0, 5) == 'ZSA25' || substr($aoe['hl7_segment'], 0, 5) == 'ZSA26' || substr($aoe['hl7_segment'], 0, 4) == 'ZSA4' || substr($aoe['hl7_segment'], 0, 4) == 'ZSA5' || substr($aoe['hl7_segment'], 0, 5) == 'ZSA3.') {
+                                            $qstnArr = explode('-', $aoe['question_text']);
+                                            echo $qstnArr[0];
+                                            $zsaAns1 = explode('(', $qstnArr[1]);
+                                            $zsaAns = $zsaAns1[0];
+                                        } else {
+                                            echo $aoe['question_text'];
+                                        }
+
+                                        $aoeAswer = '';
+                                        if (substr($aoe['hl7_segment'], 0, 3) == 'ZBL' || $aoe['hl7_segment'] == 'PID10') {
+                                            $tipsArr = explode(',', $aoe['tips']);
+                                            foreach ($tipsArr as $dta) {
+                                                $tip = explode('-', $dta);
+                                                if (trim($tip[0]) == trim($aoe['answer'])) {
+                                                    $aoeAswer = $tip[1];
+                                                } else {
+                                                    $tip1 = explode('=', $dta);
+                                                    if (trim($tip1[0]) == trim($aoe['answer'])) {
+                                                        $aoeAswer = $tip1[1];
+                                                    }
+                                                }
+                                            }
+                                        } else if ($aoe['hl7_segment'] == 'ZCY12') {
+                                            $aoeAswer = substr($aoe['answer'], 0, 4) . '-' . substr($aoe['answer'], 4, 2) . '-' . substr($aoe['answer'], 6, 2);
+                                        } else if (substr($aoe['hl7_segment'], 0, 3) == 'ZCY' || substr($aoe['hl7_segment'], 0, 3) == 'ZSA' || substr($aoe['hl7_segment'], 0, 3) == 'ZCI') {
+                                            if ($aoe['answer'] == 'Y') {
+                                                if (substr($aoe['hl7_segment'], 0, 3) != 'ZCY') {
+                                                    if (substr($aoe['hl7_segment'], 0, 5) == 'ZSA25' || substr($aoe['hl7_segment'], 0, 5) == 'ZSA26' || substr($aoe['hl7_segment'], 0, 4) == 'ZSA4' || substr($aoe['hl7_segment'], 0, 4) == 'ZSA5' || substr($aoe['hl7_segment'], 0, 5) == 'ZSA3.') {
+                                                        $aoeAswer = $zsaAns;
+                                                    } else {
+                                                        $aoeAswer = 'Yes';
+                                                    }
+                                                } else {
+                                                    $aoeAswer = $zcyAns;
+                                                }
+                                            } else if ($aoe['answer'] == 'N') {
+                                                $aoeAswer = 'No';
+                                            } else {
+                                                $aoeAswer = str_replace('~:~', ', ', $aoe['answer']);
+                                            }
+                                        } else {
+                                            $aoeAswer = str_replace('~:~', ', ', $aoe['answer']);
+                                        }
+                                        if ((strlen($aoeAswer) == 8) && (is_numeric($aoeAswer))) {
+                                            if (strpos(strtoupper($aoe['question_text']), 'DATE') !== false) {
+                                                $aoeAswer1 = substr($aoeAswer, 0, 4);
+                                                $aoeAswer2 = substr($aoeAswer, 4, 2);
+                                                $aoeAswer3 = substr($aoeAswer, 6, 2);
+                                                $aoeAswer = $aoeAswer1 . '-' . $aoeAswer2 . '-' . $aoeAswer3;
+                                            }
+                                        }
+                                        if ($aoeAswer) {
+                                            echo ': ' . $aoeAswer;
+                                        }
+                                        ?></td>
+                                </tr>
+                                <?php
+                                if (($totAoeCnt / 2) <= $totCnt && $enterHere != 1) {
+                                    $enterHere = 1;
+                                    echo '</table></td><td style="width: 50%;vertical-align: text-top" class="borderOk" ><table style="width: 100%">';
+                                }
+                                $totCnt++;
+                            }
+                        }
+                        ?> 
+                    </table></td></tr> </table><?php
+    }
+    if (trim($orderDetails['internal_comments']) && 1==2) {
+        ?>
+        <table style="width: 96%;"  >
+            <tr>
+                <td class="borderOk"  style="width: 100%; text-align: center"><?php echo xlt('Clinical Informations');?></td>       
+            </tr>
+            <tr>
+                <td class="borderOk"><?php echo $orderDetails['internal_comments']; ?></td>       
+            </tr>
+        </table><?php } ?>
+    <table style="width: 96%;margin-top: -3px;"><tr><td>
+                <table style="width: 100%;" class="print-friendly">
+                    <tr>
+                        <td valign="top" colspan="<?php if ($extBarCodeCheck == false) {
+        
+    } else {
+        echo '2';
+    } ?>" class="borderOk" style="width: 100%;"><?php echo xlt('List all applicable Diagnosis Codes. Must be at the Highest Level of Specificity');?>.</td>
+                    </tr>
+                            <?php if ($extBarCodeCheck == false) {
+                                ?>
+                        <tr> <td class="borderOk">
+                                <?php
+                                $numCount = 1;
+                                $brCount = floor(18 / count($diagArray));
+                                for ($i = 0; $i < count($diagArray); $i++) {
+                                    ?>
+                                    <?php
+                                    $diagArr = explode(';', $diagArray[$i]);
+                                    foreach ($diagArr as $data) {
+                                        if ($data)
+                                            echo $data . '; ';
+                                        if ($numCount == $brCount) {
+                                            echo '<br>';
+                                            $numCount = 0;
+                                        }
+                                        $numCount++;
+                                    }
+                                    ?>
+        <?php } ?>       
+                            </td> </tr>
+    <?php } else { ?>
+                        <tr><td class="borderOk" style="text-align: center"> <?php echo xlt('See Last Page For Diagnosis Codes');?></td>
+                            <td  class="borderOk" style="text-align: center">
+                                <img width="292" height="160" src="<?php echo $extBarcodeIamge; ?>">            
+                            </td> </tr>
+                <?php } ?>
+
+                </table>
+            </td></tr></table>    
+    <table style="width: 96%;margin-top: -3px;">
+        <tr>
+            <td class="borderOk" style="width: 50%;">
+                Bill Type: <?php
+            $billType = ($orderDetails['billto'] == 'T') ? 'Insurance' :
+                    (($orderDetails['billto'] == 'P') ? 'Patient' :
+                            (($orderDetails['billto'] == 'C') ? 'Client' :
+                                    ' '));
+            echo $billType;
+            ?>
+            </td>
+            <td class="borderOk" style="width: 50%;"><?php if ($orderDetails['billto'] == 'T') {  echo xlt('LCA Ins Code:	 (Primary Insurance Code)').':';  } ?></td>
+        </tr>
+    </table>    
+    <?php
+    if ($orderDetails['billto'] != 'C') {
+        ?>
+        <table style="width: 96%;margin-top: -3px;">
+            <tr>
+                <td class="borderOk" style="width: 50%;"><?php echo xlt('Responsible Party / Guarantor Information');?>: </td>
+                <td class="borderOk" style="width: 50%;"><?php echo xlt('Parent/Guardian Information');?>: </td>
+            </tr>
+            <tr>
+                <td class="borderOk" style="width: 50%;">       
+<pre class="labcorpPre"  style="line-height: 7px;"><?php echo xlt('RP Name');?>           : <?php echo preg_replace('/\s+/', ', ', trim($orderDetails['gtrsubsname'])); ?><br />
+<?php echo xlt('RP Address');?>        : <?php echo $orderDetails['gtrsubscriber_street']; ?><br>
+<?php echo xlt('RP City, State');?>    : <?php echo $orderDetails['gtrsubscriber_city']; if($orderDetails['gtrsubscriber_state']){ echo ', '. $orderDetails['gtrsubscriber_state']; } ?><br />
+<?php echo xlt('RP Zip');?>            : <?php echo $orderDetails['gtrsubscriber_postal_code']; ?><br>
+<?php echo xlt('RP Phone');?>          : <?php echo $orderDetails['gtrsubscriber_phone']; ?><br />
+<?php echo xlt('RP Relation to Pt');?> : <?php echo $orderDetails['gtrsubscriber_relationship']; ?><br />
+<?php echo xlt('RP Employer Name');?>  : <?php echo $orderDetails['gtrsubscriber_employer']; ?></pre>
+        </td>
+        <td class="borderOk" style="width: 50%;vertical-align: text-top"">       
+<pre class="labcorpPre"  style="line-height: 7px;"><?php echo xlt('Name');?>         : <?php echo $orderDetails['parent_last']; if($orderDetails['parent_first']){ echo ', '. $orderDetails['parent_first']; } if($orderDetails['parent_mid']){ echo ', '. $orderDetails['parent_mid'];} ?><br />
+<?php echo xlt('Address');?>      : <?php echo $orderDetails['parent_add1']; if($orderDetails['parent_add2']){ echo ', '. $orderDetails['parent_add2']; } ?><br />
+<?php echo xlt('City, State');?>  : <?php echo $orderDetails['parent_city']; if($orderDetails['parent_state']){ echo ', '. $orderDetails['parent_state'];} ?><br />
+<?php echo xlt('Zip');?>          : <?php echo $orderDetails['parent_zip']; ?><br />
+<?php echo xlt('Phone');?>        : <?php echo $orderDetails['parent_phone']; ?></pre>  
+                </td>
+            </tr>
+        </table>         
+
+        <?php
+    }
+    if ($orderDetails['billto'] == 'T') {
+        ?>
+        <table style="width: 96%;margin-top: -3px;">
+            <tr>
+                <td class="borderOk" style="width: 20%;"><?php echo xlt('ABN');?>:<?php echo $abnFlag; ?>	</td>        
+                <td class="borderOk" style="width: 50%;"><?php echo xlt("Worker's Comp");?>:	<?php echo ($orderDetails['freeb_type'] == 25) ? 'Y' : 'N'; ?></td>
+                <td class="borderOk" style="width: 30%;"><?php echo xlt('Date of Injury');?>:	</td>
+            </tr>
+        </table>    
+    <table style="width: 96%;"><tr><td>
+    <table style="width: 100%;">
+                        <tr>
+                            <td class="borderOk" style="width: 50%;"><?php echo xlt('Insurance Information');?>:</td>
+                            <td class="borderOk" style="width: 50%;"><?php echo xlt('Hospital Status');?>:  <?php echo xlt('(In-Pt / Out-Pt / Non-Pt)');?></td>
+                        </tr>
+                        <tr>
+                            <td class="borderOk"><?php echo xlt('Primary Insurance');?>:  </td>
+                            <td class="borderOk"><?php echo xlt('Secondary Insurance');?>:  </td>
+                        </tr>
+                        <tr> 
+                            <td class="borderOk" style="width: 50%;vertical-align: text-top">
+<pre class="labcorpPre"  style="line-height: 7px;"><?php echo xlt('Ins Co Name');?>       : <?php echo preg_replace('/\s+/', ', ', trim($orderDetails['insname'])); ?><br>
+<?php echo xlt('Ins Address 1');?>     : <?php echo $orderDetails['line1']; ?><br>
+<?php echo xlt('Ins Address 2');?>     : <?php echo $orderDetails['line2']; ?><br>
+<?php echo xlt('Ins City, State');?>   : <?php echo $orderDetails['inscity'] . ', ' . $orderDetails['insstate'] ?><br>
+<?php echo xlt('Ins Zip');?>           : <?php echo $orderDetails['zip']; ?><br>
+<?php echo xlt('Policy Number');?>     : <?php echo $orderDetails['policy_number']; ?><br>
+<?php echo xlt('Group');?> #           : <?php echo $orderDetails['group_number']; ?><br>
+<?php echo xlt('Emp/Group Name');?>    : <?php echo $orderDetails['subscriber_employer']; ?></pre>
+                            </td>
+                            <td class="borderOk" style="width: 50%;vertical-align: text-top">
+<pre class="labcorpPre"  style="line-height: 7px;"><?php echo xlt('Ins Co Name');?>     : <?php echo preg_replace('/\s+/', ', ', trim($orderDetails['secinsname'])); ?><br>
+<?php echo xlt('Ins Address 1');?>   : <?php echo $orderDetails['secline1']; ?><br>
+<?php echo xlt('Ins Address 2');?>   : <?php echo $orderDetails['secline2']; ?><br>
+<?php echo xlt('Ins City, State');?> : <?php echo $orderDetails['secinscity'] . ', ' . $orderDetails['secinsstate'] ?><br>
+<?php echo xlt('Ins Zip');?>         : <?php echo $orderDetails['seczip']; ?><br> 
+<?php echo xlt('Policy Number');?>   : <?php echo $orderDetails['secpolicy_number']; ?><br>
+<?php echo xlt('Group #');?>         : <?php echo $orderDetails['secgroup_number']; ?><br>
+<?php echo xlt('Emp/Group Name');?>  : <?php echo $orderDetails['secsubscriber_employer']; ?></pre>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="borderOk"><?php echo xlt('Primary Policy Holder / Insured');?>:</td>
+                            <td class="borderOk"><?php echo xlt('Secondary Policy Holder / Insured');?>:</td>
+                        </tr>
+                        <tr>
+                            <td class="borderOk" style="vertical-align: text-top">
+<pre class="labcorpPre"  style="line-height: 7px;"><?php echo xlt('Insured Name');?>            : <?php if (trim($orderDetails['subsname'])) {echo preg_replace('/\s+/', ', ', trim($orderDetails['subsname']));} ?><br>
+<?php echo xlt('Insured Address');?>         : <?php if (trim($orderDetails['subsname'])) {echo $orderDetails['subscriber_street'];} ?><br>
+<?php echo xlt('Insured City, State');?>     : <?php if (trim($orderDetails['subsname'])) {echo $orderDetails['subscriber_city'];} ?>, <?php if (trim($orderDetails['subsname'])) {echo $orderDetails['subscriber_state'];} ?><br>
+<?php echo xlt('Insured Zip');?>             : <?php if (trim($orderDetails['subsname'])) {echo $orderDetails['subscriber_postal_code'];} ?><br>
+<?php echo xlt('Insured Relation to Pt');?>  : <?php if (trim($orderDetails['subsname'])) {echo ucwords($orderDetails['subscriber_relationship']);} ?></pre>
+                            </td>
+<td class="borderOk" style="vertical-align: text-top">
+<pre class="labcorpPre"  style="line-height: 7px;"><?php echo xlt('Insured Name');?>            : <?php if (trim($orderDetails['secsubsname'])) {echo preg_replace('/\s+/', ', ', trim($orderDetails['secsubsname']));} ?><br>
+<?php echo xlt('Insured Address');?>         : <?php if (trim($orderDetails['secsubsname'])) {echo $orderDetails['secsubscriber_street'];} ?><br>
+<?php echo xlt('Insured City, State');?>     : <?php if (trim($orderDetails['secsubsname'])) {echo $orderDetails['secsubscriber_city'];} ?><?php if (trim($orderDetails['secsubsname'])) {echo ', ' . $orderDetails['secsubscriber_state'];} ?><br>
+<?php echo xlt('Insured Zip');?>             : <?php if (trim($orderDetails['secsubsname'])) {echo $orderDetails['secsubscriber_postal_code'];} ?><br>
+<?php echo xlt('Insured Relation to Pt');?>  : <?php if (trim($orderDetails['secsubsname'])) {echo ucwords($orderDetails['secsubscriber_relationship']);} ?></pre>
+                            </td>
+                        </tr>
+                    </table>
+        </td></tr></table>   
+                <?php
+            }
+            ?>
+    <?php if ($extBarCodeCheck == true) { ?>
+        <table style="width: 96%; ">
+            <tr>
+                <td style="width: 100%">
+                    <b><?php echo xlt('Diagnosis Codes');?></b>
+                </td>
+            </tr>
+            <tr>
+                <td  class="borderOk" style="text-align: center">
+                    <img width="292" height="160" src="<?php echo $extBarcodeIamge; ?>">            
+                </td> </tr>
+
+            <tr>
+        <?php
+        $numCount = 1;
+        $brCount = floor(18 / count($diagArray));
+        for ($i = 0; $i < count($diagArray); $i++) {
+            ?>
+                    <td class="borderOk"><?php
+            $diagArr = explode(';', $diagArray[$i]);
+            foreach ($diagArr as $data) {
+                echo $data . '; ';
+                if ($numCount == $brCount) {
+                    echo '<br>';
+                    $numCount = 0;
+                }
+                $numCount++;
+            }
+            ?></td>
+        <?php } ?>       
+            </tr>
+        </table>
+    <?php } ?>
+    <table border="0" style="width: 96%; margin-top: -3px;">
+        <tr>
+            <td colspan="2"><?php echo xlt('Authorization - Please sign and Date');?><br/>
+                <?php echo xlt('I hereby authorize the release of medical information related to the services described hereon and authorize payment directly to Laboratory Corporation of America. I agree to assume responsibility for payment of charges for laboratory services that are not covered by my healthcare insurer');?>.
+            </td>
+        </tr>
+        <tr>
+            <td>____________________________<br /> 
+                <?php echo xlt('Patient Signature');?>						
+            </td>
+            <td>____________________________<br />   
+                <?php echo xlt('Date');?>						
+            </td>
+        </tr>
+        <tr>
+            <td>____________________________<br />   
+                <?php echo xlt('Physician Signature');?>						
+            </td>
+            <td>____________________________<br />   
+                <?php echo xlt('Date');?>						
+            </td>
+        </tr>
+    </table>
+
+    </page>
+    <?php
+}
+?>

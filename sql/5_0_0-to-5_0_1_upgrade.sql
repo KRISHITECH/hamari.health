@@ -459,3 +459,329 @@ INSERT INTO list_options (list_id,option_id,title) VALUES ('lists','apps','Apps'
 INSERT INTO list_options (list_id,option_id,title,seq,is_default,activity) VALUES ('apps','*OpenEMR','main/main_screen.php',10,1,0);
 INSERT INTO list_options (list_id,option_id,title,seq,is_default,activity) VALUES ('apps','Calendar','main/calendar/index.php',20,0,0);
 #EndIf
+
+#IfMissingColumn insurance_companies freeb_type
+ALTER TABLE insurance_companies  ADD COLUMN `freeb_type` TINYINT(2) DEFAULT NULL;
+#EndIf
+
+#IfMissingColumn procedure_providers mirth_lab_name
+ALTER TABLE procedure_providers  ADD COLUMN `mirth_lab_name` VARCHAR(255) DEFAULT NULL;
+#EndIf
+
+#IfMissingColumn procedure_providers local_requisition
+ALTER TABLE `procedure_providers` ADD COLUMN `local_requisition` TINYINT(4) DEFAULT '0';
+#EndIf
+
+#IfMissingColumn procedure_providers mirth_lab_id
+ALTER TABLE `procedure_providers` ADD COLUMN `mirth_lab_id` SMALLINT(6) DEFAULT NULL;
+#EndIf
+
+#IfMissingColumn procedure_order psc_hold
+ALTER TABLE `procedure_order` ADD COLUMN `psc_hold` VARCHAR(30) DEFAULT NULL;
+#EndIf
+
+#IfMissingColumn procedure_order result_file_url
+ALTER TABLE `procedure_order` ADD COLUMN `result_file_url` VARCHAR(50) DEFAULT NULL;
+#EndIf
+
+#IfMissingColumn procedure_order return_comments
+ALTER TABLE `procedure_order` ADD COLUMN `return_comments` TEXT;
+#EndIf
+
+#IfMissingColumn procedure_order review_comments
+ALTER TABLE `procedure_order` ADD COLUMN `review_comments` TEXT;
+#EndIf
+
+#IfMissingColumn procedure_order reviewed_by
+ALTER TABLE `procedure_order` ADD COLUMN `reviewed_by` VARCHAR(255) DEFAULT NULL;
+#EndIf
+
+#IfMissingColumn procedure_order signed_by
+ALTER TABLE `procedure_order` ADD COLUMN `signed_by` VARCHAR(255) DEFAULT NULL;
+#EndIf
+
+#IfMissingColumn procedure_order ord_group
+ALTER TABLE `procedure_order` ADD COLUMN `ord_group` INT(10) DEFAULT '0';
+#EndIf
+
+#IfMissingColumn procedure_order cor
+ALTER TABLE `procedure_order` ADD COLUMN `cor` VARCHAR(30) DEFAULT 'No';
+#EndIf
+
+#IfMissingColumn procedure_order courtesy_copy
+ALTER TABLE `procedure_order` ADD COLUMN `courtesy_copy` TEXT COMMENT 'where to send the copy of result; only for labcorp';
+#EndIf
+
+#IfMissingColumn procedure_order billto
+ALTER TABLE `procedure_order` ADD COLUMN `billto` VARCHAR(5) DEFAULT NULL;
+#EndIf
+
+#IfMissingColumn procedure_order internal_comments
+ALTER TABLE `procedure_order` ADD COLUMN `internal_comments` TEXT;
+#EndIf
+
+#IfMissingColumn procedure_order abn
+ALTER TABLE `procedure_order` ADD COLUMN `abn` VARCHAR(30) DEFAULT 'No';
+#EndIf
+
+#IfMissingColumn procedure_order storage_type
+ALTER TABLE `procedure_order` ADD COLUMN `storage_type` TINYINT(4) DEFAULT NULL;
+#EndIf
+ 
+#IfMissingColumn procedure_order couch_rev_id
+ALTER TABLE `procedure_order` ADD COLUMN `couch_rev_id` VARCHAR(255) DEFAULT NULL;
+#EndIf
+
+#IfMissingColumn procedure_order requisition_file_url 
+ALTER TABLE `procedure_order` ADD COLUMN `requisition_file_url` VARCHAR(50) DEFAULT NULL;
+#EndIf
+
+#IfMissingColumn procedure_order_code specimen_details
+ALTER TABLE `procedure_order_code` ADD COLUMN `specimen_details` TEXT COMMENT 'specimen details only for LabCorp';
+#EndIf
+
+#IfMissingColumn procedure_order_code procedure_suffix
+ALTER TABLE `procedure_order_code` ADD COLUMN `procedure_suffix` VARCHAR (50) DEFAULT NULL;
+#EndIf
+
+#IfMissingColumn procedure_order_code patient_instructions
+ALTER TABLE `procedure_order_code` ADD COLUMN `patient_instructions` TEXT;
+#EndIf
+
+#IfMissingColumn procedure_type mirth_lab_id
+ALTER TABLE `procedure_type` ADD COLUMN `mirth_lab_id` SMALLINT(6) DEFAULT NULL;
+#EndIf
+
+#IfMissingColumn procedure_type suffix
+ALTER TABLE `procedure_type` ADD COLUMN `suffix` VARCHAR(50) NOT NULL DEFAULT '';
+#EndIf
+
+#IfMissingColumn procedure_type pap_indicator
+ALTER TABLE `procedure_type` ADD COLUMN `pap_indicator` VARCHAR(5) DEFAULT NULL;
+#EndIf
+
+#IfMissingColumn procedure_type specimen_state
+ALTER TABLE `procedure_type` ADD COLUMN `specimen_state` VARCHAR(5) DEFAULT NULL;
+#EndIf
+
+#IfMissingColumn procedure_result order_title
+ALTER TABLE `procedure_result` ADD COLUMN `order_title` VARCHAR(255) DEFAULT NULL;
+#EndIf
+
+#IfMissingColumn procedure_result profile_title
+ALTER TABLE `procedure_result` ADD COLUMN `profile_title` VARCHAR(255) DEFAULT NULL;
+#EndIf
+
+#IfMissingColumn procedure_result code_suffix
+ALTER TABLE `procedure_result` ADD COLUMN `code_suffix` VARCHAR(255) DEFAULT NULL;
+#EndIf
+
+#IfMissingColumn procedure_questions mirth_lab_id
+ALTER TABLE `procedure_questions` ADD COLUMN `mirth_lab_id` SMALLINT(6) DEFAULT NULL;
+#EndIf
+
+#IfMissingColumn procedure_questions specimen_case
+ALTER TABLE `procedure_questions` ADD COLUMN `specimen_case` CHAR(1) DEFAULT NULL COMMENT 'Specimen case';
+#EndIf
+
+#IfMissingColumn procedure_questions question_component 
+ALTER TABLE `procedure_questions` ADD COLUMN `question_component` VARCHAR(255) DEFAULT NULL;
+#EndIf
+ 
+#IfMissingColumn procedure_questions options_value
+ALTER TABLE `procedure_questions` ADD COLUMN `options_value` TEXT COMMENT 'option values of select';
+#EndIf
+
+#IfMissingColumn procedure_questions hl7_segment 
+ALTER TABLE `procedure_questions` ADD COLUMN `hl7_segment` VARCHAR(25) DEFAULT NULL COMMENT 'hl7 segment position for labcorp';
+#EndIf
+
+#IfNotColumnType procedure_questions seq INT(11)
+ALTER TABLE `procedure_questions` MODIFY COLUMN `seq` INT(11) DEFAULT '0' COMMENT 'sequence number for ordering';
+#EndIf
+
+#IfNotColumnType procedure_questions fldtype CHAR(1)
+ALTER TABLE `procedure_questions` MODIFY COLUMN `fldtype` CHAR(1) DEFAULT 'T' COMMENT 'Text, Number, Select, Multiselect, Date, Gestational-age';
+#EndIf
+
+#IfMissingColumn patient_data parent_first
+ALTER TABLE `patient_data` ADD COLUMN parent_first VARCHAR (255) DEFAULT NULL;
+#EndIf
+
+#IfMissingColumn patient_data parent_last
+ALTER TABLE `patient_data` ADD COLUMN `parent_last` VARCHAR (255) DEFAULT NULL;
+#EndIf
+
+#IfMissingColumn patient_data parent_mid
+ALTER TABLE `patient_data` ADD COLUMN `parent_mid` VARCHAR (255) DEFAULT NULL;
+#EndIf
+
+#IfMissingColumn patient_data parent_add1
+ALTER TABLE `patient_data` ADD COLUMN `parent_add1` TEXT;
+#EndIf
+
+#IfMissingColumn patient_data parent_add2
+ALTER TABLE `patient_data` ADD COLUMN `parent_add2` TEXT;
+#EndIf
+
+#IfMissingColumn patient_data parent_city
+ALTER TABLE `patient_data` ADD COLUMN `parent_city` TEXT;
+#EndIf
+
+#IfMissingColumn patient_data parent_state
+ALTER TABLE `patient_data` ADD COLUMN `parent_state` TEXT;
+#EndIf
+
+#IfMissingColumn patient_data parent_zip
+ALTER TABLE `patient_data` ADD COLUMN `parent_zip` TEXT;
+#EndIf
+
+#IfMissingColumn patient_data parent_phone
+ALTER TABLE `patient_data` ADD COLUMN `parent_phone` TEXT;
+#EndIf
+  
+#IfNotColumnType procedure_questions question_text VARCHAR(255)
+ALTER TABLE `procedure_questions` CHANGE `question_text` `question_text` VARCHAR(255) CHARSET utf8 COLLATE utf8_general_ci DEFAULT '' NULL COMMENT 'descriptive text for question_code'; 
+#EndIf
+
+#IfNotColumnType procedure_questions required TINYINT(1)
+ALTER TABLE `procedure_questions` CHANGE `required` `required` TINYINT(1) DEFAULT 0 NULL COMMENT '1 = required, 0 = not'; 
+#EndIf
+
+#IfNotColumnType procedure_questions maxsize INT(11)
+ALTER TABLE `procedure_questions` CHANGE `maxsize` `maxsize` INT(11) DEFAULT 0 NULL COMMENT 'maximum length if text input field';
+#EndIf
+
+#IfNotColumnType procedure_questions tips VARCHAR(255)
+ALTER TABLE `procedure_questions` CHANGE `tips` `tips` VARCHAR(255) CHARSET utf8 COLLATE utf8_general_ci DEFAULT '' NULL COMMENT 'Additional instructions for answering the question'; 
+#EndIf
+
+#IfNotTable module_menu
+CREATE TABLE `module_menu` (
+  `menu_id` INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+  `module_id` INT(10) UNSIGNED NOT NULL,
+  `menu_name` VARCHAR(45) NOT NULL,
+  `parent_id` INT(10) UNSIGNED NOT NULL,
+  `controller_name` VARCHAR(45) NOT NULL,
+  `action` VARCHAR(45) NOT NULL,
+  `icon` VARCHAR(45) NOT NULL,
+  `status` TINYINT(1) UNSIGNED NOT NULL,
+  `group_id` INT(10) UNSIGNED NOT NULL,
+  `order_id` INT(10) UNSIGNED NOT NULL,
+  `url` VARCHAR(225) NOT NULL,
+  PRIMARY KEY (`menu_id`)
+) ENGINE=INNODB;
+
+INSERT INTO `module_menu` (`menu_id`,`module_id`,`menu_name`,`parent_id`,`controller_name`,`action`,`icon`,`status`,`group_id`,`order_id`,`url`) VALUES 
+ (1,1,'Procedure Order',0,'lab','order','icon-multiple',1,10,1,'');
+INSERT INTO `module_menu` (`menu_id`,`module_id`,`menu_name`,`parent_id`,`controller_name`,`action`,`icon`,`status`,`group_id`,`order_id`,`url`) VALUES 
+ (2,1,'Results',0,'result','index','icon-labresultsingle',1,20,1,'');
+INSERT INTO `module_menu` (`menu_id`,`module_id`,`menu_name`,`parent_id`,`controller_name`,`action`,`icon`,`status`,`group_id`,`order_id`,`url`) VALUES 
+ (4,1,'Batch Results',2,'resultnew','index','icon-sum',1,20,2,'');
+INSERT INTO `module_menu` (`menu_id`,`module_id`,`menu_name`,`parent_id`,`controller_name`,`action`,`icon`,`status`,`group_id`,`order_id`,`url`) VALUES 
+ (5,2,'Test',0,'test','index','test',1,10,1,'');
+INSERT INTO `module_menu` (`menu_id`,`module_id`,`menu_name`,`parent_id`,`controller_name`,`action`,`icon`,`status`,`group_id`,`order_id`,`url`) VALUES 
+ (6,1,'Result Entry',2,'result','resultEntry','icon-resultentry',1,20,3,'');
+INSERT INTO `module_menu` (`menu_id`,`module_id`,`menu_name`,`parent_id`,`controller_name`,`action`,`icon`,`status`,`group_id`,`order_id`,`url`) VALUES 
+ (7,1,'Unassociated Results',2,'unassociated','index','icon-unassociatedresult',1,20,4,'');
+INSERT INTO `module_menu` (`menu_id`,`module_id`,`menu_name`,`parent_id`,`controller_name`,`action`,`icon`,`status`,`group_id`,`order_id`,`url`) VALUES 
+ (8,1,'Pull Compendium',0,'pull','index','icon-pull',1,30,1,'');
+INSERT INTO `module_menu` (`menu_id`,`module_id`,`menu_name`,`parent_id`,`controller_name`,`action`,`icon`,`status`,`group_id`,`order_id`,`url`) VALUES 
+ (9,1,'Procedure Configuration',8,'configuration','index','icon-config',1,30,2,'');
+INSERT INTO `module_menu` (`menu_id`,`module_id`,`menu_name`,`parent_id`,`controller_name`,`action`,`icon`,`status`,`group_id`,`order_id`,`url`) VALUES 
+ (10,1,'Specimen Collection',0,'specimen','index','icon-specimencollection',1,40,1,'');
+INSERT INTO `module_menu` (`menu_id`,`module_id`,`menu_name`,`parent_id`,`controller_name`,`action`,`icon`,`status`,`group_id`,`order_id`,`url`) VALUES 
+ (11,1,'Providers',0,'provider','index','icon-providers',1,50,1,'');
+ #EndIf
+
+#IfNotTable procedure_specimen
+CREATE TABLE `procedure_specimen` (
+  `procedure_specimen_id` bigint(20) NOT NULL AUTO_INCREMENT,
+  `specimen_descriptor` varchar(255) DEFAULT NULL,
+  `specimen_term` varchar(255) DEFAULT NULL,
+ `specimen_type` CHAR(1) NULL,
+  PRIMARY KEY (`procedure_specimen_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+ #EndIf
+
+#IfNotTable procedure_result_unassociated
+CREATE TABLE `procedure_result_unassociated` (
+  `id` bigint(20) NOT NULL AUTO_INCREMENT,
+  `patient_name` varchar(255) DEFAULT NULL,
+  `file_pid` bigint(20) DEFAULT NULL,
+  `file_order_id` varchar(255) DEFAULT NULL,
+  `file_location` varchar(500) DEFAULT NULL,
+  `attached` tinyint(4) DEFAULT '0',
+  `comment` varchar(1000) DEFAULT NULL,
+  PRIMARY KEY (`id`)
+)ENGINE=InnoDB;
+ #EndIf
+
+#IfNotTable procedure_subtest_result
+CREATE TABLE `procedure_subtest_result` (
+  `procedure_subtest_result_id` BIGINT(20) NOT NULL AUTO_INCREMENT,
+  `procedure_report_id` BIGINT(20) NOT NULL COMMENT 'references procedure_report.procedure_report_id',
+  `subtest_code` VARCHAR(30) NOT NULL DEFAULT '',
+  `subtest_desc` VARCHAR(255) NOT NULL DEFAULT '',
+  `result_value` VARCHAR(255) NOT NULL DEFAULT '',
+  `units` VARCHAR(30) NOT NULL DEFAULT '',
+  `range` VARCHAR(255) NOT NULL DEFAULT '',
+  `abnormal_flag` VARCHAR(31) NOT NULL DEFAULT '' COMMENT 'no,yes,high,low',
+  `result_status` VARCHAR(31) NOT NULL DEFAULT '' COMMENT 'preliminary, cannot be done, final, corrected, incompete...etc.',
+  `result_time` DATETIME DEFAULT NULL,
+  `provider_name` VARCHAR(255) DEFAULT NULL,
+  `comments` TEXT NOT NULL COMMENT 'comments of subtest',
+  `order_title` VARCHAR(255) DEFAULT NULL,
+  `code_suffix` VARCHAR(255) DEFAULT NULL,
+  `profile_title` VARCHAR(255) DEFAULT NULL,
+  `providers_id` INT(11) DEFAULT NULL,
+  `facility` VARCHAR(255) DEFAULT NULL,
+  `last_modified_date` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'Last modified date',
+  PRIMARY KEY (`procedure_subtest_result_id`),
+  KEY `procedure_report_id` (`procedure_report_id`)
+) ENGINE=INNODB;
+ #EndIf
+
+#IfNotTable procedure_subtest_result_only
+CREATE TABLE `procedure_subtest_result_only` (
+  `lab_result_id` bigint(20) NOT NULL,
+  `subtest_code` varchar(30) NOT NULL DEFAULT '',
+  `subtest_desc` varchar(255) NOT NULL DEFAULT '',
+  `result_value` varchar(255) NOT NULL DEFAULT '',
+  `units` varchar(30) NOT NULL DEFAULT '',
+  `range` varchar(255) NOT NULL DEFAULT '',
+  `abnormal_flag` varchar(31) NOT NULL DEFAULT '',
+  `result_status` varchar(31) NOT NULL DEFAULT '',
+  `provider_name` varchar(255) DEFAULT NULL,
+  `result_time` datetime DEFAULT NULL,
+  `performing_lab` varchar(255) DEFAULT NULL,
+  `comments` text,
+  `order_title` varchar(255) DEFAULT NULL
+) ENGINE=InnoDB;
+ #EndIf
+ 
+#IfNotTable procedure_result_only
+CREATE TABLE `procedure_result_only` (
+  `lab_result_id` BIGINT (20) NOT NULL,
+  `patient_lname` VARCHAR (255) DEFAULT NULL,
+  `patient_fname` VARCHAR (255) DEFAULT NULL,
+  `patient_dob` DATE DEFAULT NULL,
+  `patient_gender` VARCHAR (30) DEFAULT NULL,
+  `patient_home_phone` VARCHAR (255) DEFAULT NULL,
+  `patient_work_phone` VARCHAR (255) DEFAULT NULL,
+  `patient_ss_no` VARCHAR (255) DEFAULT NULL,
+  `date` DATETIME DEFAULT NULL,
+  `result_status` VARCHAR (255) DEFAULT NULL,
+  `specimen_id` VARCHAR (255) DEFAULT NULL,
+  `order_level_comment` VARCHAR (255) DEFAULT NULL,
+  `performing_lab_addr1` VARCHAR (50) DEFAULT NULL,
+  `performing_lab_addr2` VARCHAR (50) DEFAULT NULL,
+  `performing_lab_city` VARCHAR (50) DEFAULT NULL,
+  `performing_lab_state` VARCHAR (30) DEFAULT NULL,
+  `performing_lab_zip` VARCHAR (20) DEFAULT NULL,
+  `performing_lab_phone` VARCHAR (20) DEFAULT NULL,
+  `performing_lab_provider` VARCHAR (255) DEFAULT NULL,
+  `performing_lab_name` VARCHAR (255) DEFAULT NULL,
+  `procedure_order_id` BIGINT (20) DEFAULT NULL
+) ENGINE = INNODB ;
+ #EndIf

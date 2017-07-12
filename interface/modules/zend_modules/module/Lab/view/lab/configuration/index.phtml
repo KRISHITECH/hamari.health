@@ -1,0 +1,765 @@
+<?php
+/* +-----------------------------------------------------------------------------+
+ *    OpenEMR - Open Source Electronic Medical Record
+ *    Copyright (C) 2013 Z&H Consultancy Services Private Limited <sam@zhservices.com>
+ *
+ *    This program is free software: you can redistribute it and/or modify
+ *    it under the terms of the GNU Affero General Public License as
+ *    published by the Free Software Foundation, either version 3 of the
+ *    License, or (at your option) any later version.
+ *
+ *    This program is distributed in the hope that it will be useful,
+ *    but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *    GNU Affero General Public License for more details.
+ *
+ *    You should have received a copy of the GNU Affero General Public License
+ *    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *    @author  Sanal Jacob <sanalj@zhservices.com>
+ * +------------------------------------------------------------------------------+
+ */
+echo $this->headScript()->appendFile($this->basePath() . '/js/lab/configuration.js')
+?>
+<style>
+    table.gridtable td {
+        border-width: 1px 1px 0px 1px;
+        border-style: dotted;
+        border-color: #ccc;
+        margin: 0;
+        padding: 0;
+    }
+
+    .textfield
+    {
+        width:300px;
+    }
+
+    .icon_add
+    {
+        float:left;
+        width:20px;
+        background-image:url("<?php echo $this->basePath(); ?>/css/icons/add.png");
+        background-repeat:no-repeat;
+        cursor:pointer;
+        cursor:hand;
+    }
+
+    .icon_edit
+    {
+        float:left;
+        width:20px;
+        background-image:url("<?php echo $this->basePath(); ?>/css/icons/pencil.png");
+        background-repeat:no-repeat;
+        cursor:pointer;
+        cursor:hand;
+    }
+
+
+    .icon_delete
+    {
+        float:left;
+        width:20px;
+        background-image:url("<?php echo $this->basePath(); ?>/css/icons/cancel.png");
+        background-repeat:no-repeat;
+        cursor:pointer;
+        cursor:hand;
+    }
+    .icon_disadd
+    {
+        float:left;
+        width:20px;
+        background-image:url("<?php echo $this->basePath(); ?>/css/icons/disadd.png");
+        background-repeat:no-repeat;
+        cursor:pointer;
+        cursor:hand;
+    }
+    .icon_disedit
+    {
+        float:left;
+        width:20px;
+        background-image:url("<?php echo $this->basePath(); ?>/css/icons/dispencil.png");
+        background-repeat:no-repeat;
+        cursor:pointer;
+        cursor:hand;
+    }
+
+
+    .icon_disdelete
+    {
+        float:left;
+        width:20px;
+        background-image:url("<?php echo $this->basePath(); ?>/css/icons/discancel.png");
+        background-repeat:no-repeat;
+        cursor:pointer;
+        cursor:hand;
+    }
+
+</style>
+<div style="margin:10px 0;"></div>
+<div class="easyui-panel" title="<?php echo xlt('Configuration Types of Orders and Results'); ?>" >
+    <a href="javascript:void(0)" onclick="addConfig()">
+        <img  src="<?php echo $this->basePath(); ?>/css/icons/add_type.png" title='Add' border=0  />
+    </a>
+    <b>ADD</b>
+    <table id="tg" class="easyui-treegrid"  style="width:850px;height:300px"
+           data-options="
+           iconCls: 'icon-ok',
+           rownumbers: true,
+           animate: true,
+           collapsible: true,
+           fitColumns: true,
+           url: './configuration/getAllConfigDeatils',
+           idField: 'id',
+           treeField: 'name',
+           pagination:true,
+           pageNumber:1,
+           pageSize:25,
+           pageList:[10,15,20,25,50],
+           width:'88%',  
+           height:'auto',  
+
+           ">
+        <thead>			
+            <tr>
+                <th data-options="field:'pk',width:25,editor:'text'"><?php echo xlt('Type ID'); ?></th>
+                <th data-options="field:'name',width:180,editor:'text'"><?php echo xlt('Name'); ?></th>
+                <th data-options="field:'order',width:60,align:'left',editor:'text'"><?php echo xlt('Type'); ?></th>
+                <th data-options="field:'procedure_code',width:50,editor:'text'"><?php echo xlt('Code'); ?></th>
+                <th data-options="field:'range',width:50,editor:'text'"><?php echo xlt('Normal Value'); ?></th>
+                <th data-options="field:'discription',width:170,editor:'text'"><?php echo xlt('Description'); ?></th>
+                <th data-options="field:'action',title:'Action',width:39,align:'centre'"></th>              
+            </tr>
+        </thead>
+    </table>
+
+
+
+    <!-- Start Popup -->
+
+    <div id="w" class="easyui-window" title="Procedure Types Configuration" data-options="modal:true,closed:true,iconCls:'icon-save'"
+         style="width:650px;min-height:330px;padding:10px;">
+
+        <form name="config_form" id="config_form" method="post">
+
+            <div id="add_div" style="float:left;display:none;width:100%">
+                <div id="group_title" style="float:left;background-color:#E0ECFF;width:100%;height:20px;padding-top:5px;padding-left:5px">
+                    <div id="group_indicator" style="float:left;width:15px;font-weight:bold;font-size:16px;color:#9A9A9A;cursor:hand;cursor:pointer"
+                         onclick="statusChange(this.id)">
+                        +				
+                    </div>
+                    <?php echo $this->formRow($form->get('group_indicator_value[]')); ?>
+                    <?php echo $this->formRow($form->get('group_type_id[]')); ?>
+                    <div id="group_heading" style="margin-left:5px;font-weight:bold;color:#666666">
+                        Group
+                    </div>
+
+                </div>	
+                <div id="group_div" style="float:left;margin-left:20px;display:none">
+                    <table style="width:600px;min-height:280px"  class="gridtable">
+                        <tr>
+                            <td width="150">							
+                                <?php echo xlt('Name'); ?>
+                            </td>
+                            <td width="430">
+                                <?php echo $this->formRow($form->get('group_name[]')); ?>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <?php echo xlt('Description'); ?>
+                            </td>
+                            <td>
+                                <?php echo $this->formRow($form->get('group_description[]')); ?>
+                            </td>
+                        </tr>
+
+                    </table>
+                </div>
+
+                <div id="order_title" style="float:left;background-color:#E0ECFF;width:100%;height:20px;padding-top:5px;padding-left:5px">
+                    <div id="order_indicator" style="float:left;width:15px;font-weight:bold;font-size:16px;color:#9A9A9A;cursor:hand;cursor:pointer"
+                         onclick="statusChange(this.id)">
+                        +				
+                    </div>
+                    <?php echo $this->formRow($form->get('order_indicator_value[]')); ?>
+                    <?php echo $this->formRow($form->get('order_type_id[]')); ?>
+                    <div id="order_heading" style="margin-left:5px;font-weight:bold;color:#666666">
+                        <?php echo xlt('Order'); ?>
+                    </div>
+
+                </div>
+
+                <div id="order_div" style="float:left;margin-left:20px;display:none">
+                    <table style="width:600px;min-height:280px" class="gridtable">
+                        <tr>
+                            <td width="150">
+                                <?php echo xlt('Name'); ?>
+                            </td>
+                            <td width="430">
+                                <?php echo $this->formRow($form->get('order_name[]')); ?>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <?php echo xlt('Description'); ?>
+                            </td>
+                            <td>
+                                <?php echo $this->formRow($form->get('order_description[]')); ?>
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <td>
+                                <?php echo xlt('Sequence'); ?>
+                            </td>
+                            <td>
+                                <?php echo $this->formRow($form->get('order_sequence[]')); ?>
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <td>
+                                <?php echo xlt('Order From'); ?>
+                            </td>
+                            <td>
+                                <?php echo $this->formRow($form->get('order_from')); ?>
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <td>
+                                <?php echo xlt('Procedure Code'); ?>
+                            </td>
+                            <td>
+                                <?php echo $this->formRow($form->get('order_procedurecode[]')); ?>
+
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <td>
+                                <?php echo xlt('Standard Code'); ?>
+                            </td>
+                            <td>
+                                <div><?php echo $this->formRadio($form->get('standard_code'), 'prepend'); ?></div>
+                                <?php echo $this->formRow($form->get('order_standardcode[]')); ?>
+                                <div class="autocomplete-suggestions" id="resultdiv" style="display:none;z-index:99999;position:relative;min-width:150px;background-color:#E0ECFF"></div>
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <td>
+                                <?php echo xlt('Body Site'); ?>
+                            </td>
+                            <td>
+                                <?php echo $this->formRow($form->get('order_bodysite')); ?>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <?php echo xlt('Specimen_type'); ?>
+                            </td>
+                            <td>
+                                <?php echo $this->formRow($form->get('order_specimentype')); ?>
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <td>
+                                <?php echo xlt('Administer Via'); ?>
+                            </td>
+                            <td>
+                                <?php echo $this->formRow($form->get('order_administervia')); ?>
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <td>
+                                <?php echo xlt('Laterality'); ?>
+                            </td>
+                            <td>
+                                <?php echo $this->formRow($form->get('order_laterality')); ?>
+                            </td>
+                        </tr>
+
+                    </table>
+                </div>
+
+                <div id="result_title" style="float:left;background-color:#E0ECFF;width:100%;height:20px;padding-top:5px;padding-left:5px">
+                    <div id="result_indicator" style="float:left;width:15px;font-weight:bold;font-size:16px;color:#9A9A9A;cursor:hand;cursor:pointer"
+                         onclick="statusChange(this.id)">
+                        +				
+                    </div>
+                    <?php echo $this->formRow($form->get('result_indicator_value[]')); ?>
+                    <?php echo $this->formRow($form->get('result_type_id[]')); ?>	
+                    <div id="result_heading" style="margin-left:5px;font-weight:bold;color:#666666">
+                        <?php echo xlt('Result'); ?>
+                    </div>
+
+                </div>
+
+                <div id="result_div" style="float:left;margin-left:20px;display:none">
+                    <table style="width:600px;min-height:280px"  class="gridtable">
+                        <tr>
+                            <td width="150">
+                                <?php echo xlt('Name'); ?>
+                            </td>
+                            <td width="430">
+                                <?php echo $this->formRow($form->get('result_name[]')); ?>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <?php echo xlt('Description'); ?>
+                            </td>
+                            <td>
+                                <?php echo $this->formRow($form->get('result_description[]')); ?>
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <td>
+                                <?php echo xlt('Sequence'); ?>
+                            </td>
+                            <td>
+                                <?php echo $this->formRow($form->get('result_sequence[]')); ?>
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <td>
+                                <?php echo xlt('Default Units'); ?>
+                            </td>
+                            <td>
+                                <?php echo $this->formRow($form->get('result_defaultunits')); ?>
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <td>
+                                <?php echo xlt('Default Range'); ?>
+                            </td>
+                            <td>
+                                <?php echo $this->formRow($form->get('result_defaultrange[]')); ?>
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <td>
+                                <?php echo xlt('Followup Services'); ?>
+                            </td>
+                            <td>
+                                <?php echo $this->formRow($form->get('result_followupservices[]')); ?>
+                            </td>
+                        </tr>
+
+                    </table>
+                </div>
+
+                <div id="reccomendation_title" style="float:left;background-color:#E0ECFF;width:100%;height:20px;padding-top:5px;padding-left:5px">
+                    <div id="reccomendation_indicator" style="float:left;width:15px;font-weight:bold;font-size:16px;color:#9A9A9A;cursor:hand;cursor:pointer"
+                         onclick="statusChange(this.id)">
+                        +				
+                    </div>
+                    <?php echo $this->formRow($form->get('reccomendation_indicator_value[]')); ?>
+                    <?php echo $this->formRow($form->get('reccomendation_type_id[]')); ?>	
+                    <div id="reccomendation_heading" style="margin-left:5px;font-weight:bold;color:#666666">
+                        <?php echo xlt('Recomendation'); ?>
+                    </div>
+
+                </div>
+
+
+                <div id="reccomendation_div" style="float:left;margin-left:20px;display:none">
+                    <table style="width:600px;min-height:280px"  class="gridtable">
+                        <tr>
+                            <td width="150">
+                                <?php echo xlt('Name'); ?>
+                            </td>
+                            <td width="430">
+                                <?php echo $this->formRow($form->get('reccomendation_name[]')); ?>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <?php echo xlt('Description'); ?>
+                            </td>
+                            <td>
+                                <?php echo $this->formRow($form->get('reccomendation_description[]')); ?>
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <td>
+                                <?php echo xlt('Sequence'); ?>
+                            </td>
+                            <td>
+                                <?php echo $this->formRow($form->get('reccomendation_sequence[]')); ?>
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <td>
+                                <?php echo xlt('Default Units'); ?>
+                            </td>
+                            <td>
+                                <?php echo $this->formRow($form->get('reccomendation_defaultunits')); ?>
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <td>
+                                <?php echo xlt('Default Range'); ?>
+                            </td>
+                            <td>
+                                <?php echo $this->formRow($form->get('reccomendation_defaultrange[]')); ?>
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <td>
+                                <?php echo xlt('Followup Services'); ?>
+                            </td>
+                            <td>
+                                <?php echo $this->formRow($form->get('reccomendation_followupservices[]')); ?>
+                            </td>
+                        </tr>
+
+                    </table>
+                </div>
+
+            </div>
+            <!--CLONE DIVS...................................................................................-->
+
+            <div id="group_div_clone" style="float:left;display:none">
+
+                <div id="group_title" style="float:left;background-color:#E0ECFF;width:100%;height:20px;padding-top:5px;padding-left:5px">
+                    <div id="group_indicator" style="float:left;width:15px;font-weight:bold;font-size:16px;color:#9A9A9A;cursor:hand;cursor:pointer"
+                         onclick="statusChange(this.id)">
+                        +				
+                    </div>
+                    <?php echo $this->formRow($form->get('group_indicator_value[]')); ?>
+                    <?php echo $this->formRow($form->get('group_type_id[]')); ?>
+                    <div id="group_heading" style="margin-left:5px;font-weight:bold;color:#666666">
+                        <?php echo xlt('Group'); ?>
+                    </div>
+
+                </div>	
+                <div id="group_div" style="float:left;margin-left:20px;display:none">
+                    <table style="width:600px;min-height:280px"  class="gridtable">
+                        <tr>
+                            <td width="150">							
+                                <?php echo xlt('Name'); ?>
+                            </td>
+                            <td width="430">
+                                <?php echo $this->formRow($form->get('group_name[]')); ?>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <?php echo xlt('Description'); ?>
+                            </td>
+                            <td>
+                                <?php echo $this->formRow($form->get('group_description[]')); ?>
+                            </td>
+                        </tr>
+
+                    </table>
+                </div>
+            </div>
+
+            <div id="order_div_clone" style="float:left;display:none">
+
+                <div id="order_title" style="float:left;background-color:#E0ECFF;width:100%;height:20px;padding-top:5px;padding-left:5px">
+                    <div id="order_indicator" style="float:left;width:15px;font-weight:bold;font-size:16px;color:#9A9A9A;cursor:hand;cursor:pointer"
+                         onclick="statusChange(this.id)">
+                        +				
+                    </div>
+                    <?php echo $this->formRow($form->get('order_indicator_value[]')); ?>
+                    <?php echo $this->formRow($form->get('order_type_id[]')); ?>
+                    <div id="order_heading" style="margin-left:5px;font-weight:bold;color:#666666">
+                        <?php echo xlt('Order'); ?>
+                    </div>
+
+                </div>	
+                <div id="order_div" style="float:left;margin-left:20px;">
+                    <table style="width:600px;min-height:280px" class="gridtable">
+                        <tr>
+                            <td width="150">
+                                <?php echo xlt('Name'); ?>
+                            </td>
+                            <td width="430">
+                                <?php echo $this->formRow($form->get('order_name[]')); ?>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <?php echo xlt('Description'); ?>
+                            </td>
+                            <td>
+                                <?php echo $this->formRow($form->get('order_description[]')); ?>
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <td>
+                                <?php echo xlt('Sequence'); ?>
+                            </td>
+                            <td>
+                                <?php echo $this->formRow($form->get('order_sequence[]')); ?>
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <td>
+                                <?php echo xlt('Order From'); ?>
+                            </td>
+                            <td>
+                                <?php echo $this->formRow($form->get('order_from')); ?>
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <td>
+                                <?php echo xlt('Procedure Code'); ?>
+                            </td>
+                            <td>
+                                <?php echo $this->formRow($form->get('order_procedurecode[]')); ?>
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <td>
+                                <?php echo xlt('Standard Code'); ?>
+                            </td>
+                            <td>
+                                <div><?php echo $this->formRadio($form->get('standard_code'), 'prepend'); ?></div>
+                                <?php echo $this->formRow($form->get('order_standardcode[]')); ?>
+                                <div class="autocomplete-suggestions" id="resultdiv_0" style="display:none;z-index:99999;position:relative;min-width:150px;background-color:#E0ECFF"></div>
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <td>
+                                <?php echo xlt('Body Site'); ?>
+                            </td>
+                            <td>
+                                <?php echo $this->formRow($form->get('order_bodysite')); ?>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <?php echo xlt('Specimen_type'); ?>
+                            </td>
+                            <td>
+                                <?php echo $this->formRow($form->get('order_specimentype')); ?>
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <td>
+                                <?php echo xlt('Administer Via'); ?>
+                            </td>
+                            <td>
+                                <?php echo $this->formRow($form->get('order_administervia')); ?>
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <td>
+                                <?php echo xlt('Laterality'); ?>
+                            </td>
+                            <td>
+                                <?php echo $this->formRow($form->get('order_laterality')); ?>
+                            </td>
+                        </tr>
+
+                    </table>
+                </div>
+            </div>
+
+            <div id="result_div_clone" style="float:left;display:none">
+                <div id="result_title" style="float:left;background-color:#E0ECFF;width:100%;height:20px;padding-top:5px;padding-left:5px">
+                    <div id="result_indicator" style="float:left;width:15px;font-weight:bold;font-size:16px;color:#9A9A9A;cursor:hand;cursor:pointer"
+                         onclick="statusChange(this.id)">
+                        +				
+                    </div>
+                    <?php echo $this->formRow($form->get('result_indicator_value[]')); ?>
+                    <?php echo $this->formRow($form->get('result_type_id[]')); ?>	
+                    <div id="result_heading" style="margin-left:5px;font-weight:bold;color:#666666">
+                        <?php echo xlt('Result'); ?>
+                    </div>
+
+                </div>
+                <div id="result_div" style="float:left;margin-left:20px;display:none">
+                    <table style="width:600px;min-height:280px"  class="gridtable">
+                        <tr>
+                            <td width="150">
+                                <?php echo xlt('Name'); ?>
+                            </td>
+                            <td width="430">
+                                <?php echo $this->formRow($form->get('result_name[]')); ?>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <?php echo xlt('Description'); ?>
+                            </td>
+                            <td>
+                                <?php echo $this->formRow($form->get('result_description[]')); ?>
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <td>
+                                <?php echo xlt('Sequence'); ?>
+                            </td>
+                            <td>
+                                <?php echo $this->formRow($form->get('result_sequence[]')); ?>
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <td>
+                                <?php echo xlt('Default Units'); ?>
+                            </td>
+                            <td>
+                                <?php echo $this->formRow($form->get('result_defaultunits')); ?>
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <td>
+                                <?php echo xlt('Default Range'); ?>
+                            </td>
+                            <td>
+                                <?php echo $this->formRow($form->get('result_defaultrange[]')); ?>
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <td>
+                                <?php echo xlt('Followup Services'); ?>
+                            </td>
+                            <td>
+                                <?php echo $this->formRow($form->get('result_followupservices[]')); ?>
+                            </td>
+                        </tr>
+
+                    </table>
+                </div>
+            </div>
+
+            <div id="reccomendation_div_clone" style="float:left;display:none">
+                <div id="reccomendation_title" style="float:left;background-color:#E0ECFF;width:100%;height:20px;padding-top:5px;padding-left:5px">
+                    <div id="reccomendation_indicator" style="float:left;width:15px;font-weight:bold;font-size:16px;color:#9A9A9A;cursor:hand;cursor:pointer"
+                         onclick="statusChange(this.id)">
+                        +				
+                    </div>
+                    <?php echo $this->formRow($form->get('reccomendation_indicator_value[]')); ?>
+                    <?php echo $this->formRow($form->get('reccomendation_type_id[]')); ?>	
+                    <div id="reccomendation_heading" style="margin-left:5px;font-weight:bold;color:#666666">
+                        <?php echo xlt('Reccomendation'); ?>
+                    </div>
+
+                </div>
+                <div id="reccomendation_div" style="float:left;margin-left:20px;display:none">
+                    <table style="width:600px;min-height:280px"  class="gridtable">
+                        <tr>
+                            <td width="150">
+                                <?php echo xlt('Name'); ?>
+                            </td>
+                            <td width="430">
+                                <?php echo $this->formRow($form->get('reccomendation_name[]')); ?>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <?php echo xlt('Description'); ?>
+                            </td>
+                            <td>
+                                <?php echo $this->formRow($form->get('reccomendation_description[]')); ?>
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <td>
+                                <?php echo xlt('Sequence'); ?>
+                            </td>
+                            <td>
+                                <?php echo $this->formRow($form->get('reccomendation_sequence[]')); ?>
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <td>
+                                <?php echo xlt('Default Units'); ?>
+                            </td>
+                            <td>
+                                <?php echo $this->formRow($form->get('reccomendation_defaultunits')); ?>
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <td>
+                                <?php echo xlt('Default Range'); ?>
+                            </td>
+                            <td>
+                                <?php echo $this->formRow($form->get('reccomendation_defaultrange[]')); ?>
+                            </td>
+                        </tr>
+
+                        <tr>
+                            <td>
+                                <?php echo xlt('Followup Services'); ?>
+                            </td>
+                            <td>
+                                <?php echo $this->formRow($form->get('reccomendation_followupservices[]')); ?>
+                            </td>
+                        </tr>
+
+                    </table>
+                </div>
+
+            </div>
+
+
+            <!--END OF CLONE DIVS..................................................-->
+
+
+            <div id="edit_div" style="display:none;float:left;width:100%">
+
+            </div>
+
+
+
+            <div style="padding:5px 0;text-align:right;padding-right:30px;padding-left:230px">
+
+                <input type="hidden" name="grp_count" id="grp_count" value="" />
+                <input type="hidden" name="ord_count" id="ord_count" value="" />
+                <input type="hidden" name="res_count" id="res_count" value="" />
+                <input type="hidden" name="rec_count" id="rec_count" value="" />
+
+                <input type="hidden" name="init_edit_id" id="init_edit_id" value="" />
+
+
+                <input type="hidden" name="action" id="action" value="edit" />
+                <input type="hidden" name="exist_typeid" id="exist_typeid" value="" />
+                <a href="#" class="easyui-linkbutton" iconCls="icon-save" plain="true" onclick="saveItem()" id='save'>Save</a>
+                <a href="#" class="easyui-linkbutton" iconCls="icon-cancel" plain="true" onclick="cancelItem()">Cancel</a>
+            </div>
+        </form>
+    </div>
+
+    <!-- End Popup -->
+
+
+
+</div>
+
+<div id="dlg" class="easyui-dialog" title="<?php echo xlt('Message'); ?>" data-options="iconCls:'icon-tip'" style="width:400px;height:125px;padding:10px">
+    <div style="margin: 20px; font-size: 14px; color:#0E2D5F"><?php echo xlt('Procedure Code Already Exist'); ?></div>
+</div>
+<?php
+echo $this->form()->closeTag();
+?>

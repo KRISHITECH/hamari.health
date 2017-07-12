@@ -1,0 +1,178 @@
+<?php
+// +-----------------------------------------------------------------------------+ 
+// Copyright (C) 2013 Z&H Consultancy Services Private Limited <sam@zhservices.com>
+//
+//
+// This program is free software; you can redistribute it and/or
+// modify it under the terms of the GNU General Public License
+// as published by the Free Software Foundation; either version 2
+// of the License, or (at your option) any later version.
+//
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+//
+// A copy of the GNU General Public License is included along with this program:
+// openemr/interface/login/GnuGPL.html
+// For more information write to the Free Software
+// Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+// 
+// Author:   Jacob T.Paul <jacob@zhservices.com>
+//
+// +------------------------------------------------------------------------------+
+echo $this->doctype();
+?>
+
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+<?php echo $this->headMeta()->appendName('viewport', 'width=device-width, initial-scale=1.0') ?>
+
+        <!-- Le styles -->
+        <?php
+        echo $this->headLink(array('rel' => 'shortcut icon', 'type' => 'image/vnd.microsoft.icon', 'href' => $this->basePath() . '/images/favicon.ico'))
+                ->prependStylesheet($this->basePath() . '/css/jquery.contextMenu.css')
+                ->prependStylesheet($this->basePath() . '/css/easyui.css')
+                ->prependStylesheet($this->basePath() . '/css/icon.css')
+                ->prependStylesheet($this->basePath() . '/css/demo.css')
+                ->prependStylesheet($this->basePath() . '/css/bootstrap-responsive.min.css')
+                ->prependStylesheet($this->basePath() . '/css/style.css')
+                ->prependStylesheet($this->basePath() . '/css/suggestion.css')
+                ->prependStylesheet($this->basePath() . '/css/bubbletip-IE.css')
+                ->prependStylesheet($this->basePath() . '/css/bubbletip.css')
+                ->prependStylesheet($this->basePath() . '/css/bubbles.css')
+                ->prependStylesheet($this->basePath() . '/css/zendlab.css')
+                ->prependStylesheet($this->basePath() . '/css/jquery-ui.css')
+                ->prependStylesheet($GLOBALS['css_header'])
+        ?>
+
+        <!-- Scripts -->
+        <?php
+        echo $this->headScript()
+                ->prependFile($this->basePath() . '/js/lib/html5.js', 'text/javascript', array('conditional' => 'lt IE 9',))
+                ->prependFile($this->basePath() . '/js/lib/bootstrap.min.js')
+                ->prependFile($this->basePath() . '/js/lab/result.js')
+                ->prependFile($this->basePath() . '/js/lib/jquery-ui-timepicker-addon.js')
+                ->prependFile($this->basePath() . '/js/lib/jquery.ui.datepicker.js')
+                ->prependFile($this->basePath() . '/js/lib/jquery.ui.slider.js')
+                ->prependFile($this->basePath() . '/js/lib/bubbles.js')
+                ->prependFile($this->basePath() . '/js/lib/jquery.ui.mouse.js')
+                ->prependFile($this->basePath() . '/js/lib/jquery.ui.widget.js')
+                ->prependFile($this->basePath() . '/js/lib/jquery.ui.core.js')
+                ->prependFile($this->basePath() . '/js/lib/jquery.easyui.overrider.js')
+                ->prependFile($this->basePath() . '/js/lib/jquery.edatagrid.js')
+                ->prependFile($this->basePath() . '/js/lib/jquery.easyui.min.js')
+                ->prependFile($this->basePath() . '/js/lib/jquery-1.8.0.min.js')
+                ->prependFile($this->basePath() . '/../../../../library/dialog.js')
+        ?>
+        <title><?php echo xlt("Lab"); ?></title>
+    </head>
+    <body  class="body_top">
+        <div class="container" style="width:100%;margin-top: 0px !important;">
+            <?php
+            /**
+             * getMenu
+             * @param array $data module id, current controller and current action
+             */
+            $data = array(
+                'module' => 1,
+                'controller' => $current_controller,
+                'action' => $current_action,
+                    //'parent'      => 0,
+            );
+            $menus = $this->menu()->getMenu($data);
+            ?>
+            <div id="menupanel" style="padding:5px;border:1px solid #ddd">
+                <?php
+                $chk = 0;
+                foreach ($menus as $menu):
+                    /**
+                     * check current controller and current action 
+                     * for highlights selected menu item
+                     */
+                    if (strtolower($current_controller) == $menu['controller_name'] && $current_action == $menu['action']) {
+                        $menuAactive = "menu-active";
+                    } else {
+                        $menuAactive = '';
+                    }
+                    /**
+                     * child > 0 or sub == 0 
+                     * if child item selected child shifted to main item
+                     * id settings for sub menus
+                     * if only main menu class easyui-linkbutton
+                     * for avoid drop down image
+                     */
+                    if ($menu['child'] > 0 || ($menu['sub'] == 0)) {
+                        $subMenuId = "menu:'#mm$menu[group_id]',";
+                        $class = 'easyui-splitbutton';
+                    } else {
+                        $subMenuId = '';
+                        $class = 'easyui-linkbutton';
+                    }
+                    /**
+                     * child < 1 or parent_id == 0 
+                     * if only main menu class easyui-linkbutton
+                     * for avoid drop down image
+                     */
+                    if ($menu['child'] < 1 && $menu['parent_id'] == 0) {
+                        $subMenuId = '';
+                        $class = 'easyui-linkbutton';
+                    }
+                    /**
+                     * Only Main menu items
+                     */
+                    if ($menu['sub'] == 0) :
+                        ?>    
+                        <a href="<?php echo $this->url($menu['controller_name'], array('action' => $menu['action'])); ?>" 
+                           style="font-style: normal; color:#0E2D5F" 
+                           class="<?php echo $class . ' ' . $menuAactive; ?>" 
+                           data-options="<?php echo $subMenuId; ?>iconCls:'<?php echo $menu[icon]; ?>', plain:true">
+                        <?php echo $menu['menu_name']; ?>
+                        </a>
+                        <?php
+                    endif;
+                    $group = $menu['group_id'];
+                endforeach;
+                ?>
+            </div>
+
+            <!-- Start Sub Menu -->
+            <?php
+            $group = '';
+            /**
+             * Submenu items
+             */
+            foreach ($menus as $menu) :
+                if ($group != '' && $group != $menu['group_id']) {
+                    ?> </div> <?php
+                }
+                if ($menu['parent_id'] == 0) {
+                    ?>
+                <div id="mm<?php echo $menu['group_id']; ?>" style="width:150px;">
+        <?php
+    }
+    if ($menu['sub'] != 0) :
+        ?>
+                    <div data-options="iconCls:'<?php echo $menu[icon]; ?>'">
+                        <a href="<?php echo $this->url($menu['controller_name'], array('action' => $menu['action'])); ?>" 
+                           style="font-style: normal; color:#0E2D5F"
+                           class="<?php echo $menuAactive; ?>">
+                    <?php echo $menu['menu_name']; ?>
+                        </a>
+                    </div>
+
+                    <?php
+                endif;
+                $group = $menu['group_id'];
+            endforeach;
+            echo "</div>";
+            ?>
+            <!-- End Sub Menu -->
+        <?php echo $this->content; ?>            
+        </div> <!-- /container -->
+<?php echo $this->inlineScript() ?>
+    </body>
+</html>

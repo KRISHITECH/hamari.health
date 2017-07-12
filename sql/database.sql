@@ -2513,7 +2513,8 @@ CREATE TABLE `insurance_companies` (
   `x12_default_partner_id` int(11) default NULL,
   `alt_cms_id` varchar(15) NOT NULL DEFAULT '',
   `inactive` int(1) NOT NULL DEFAULT '0',
-  PRIMARY KEY  (`id`)
+  `freeb_type` TINYINT(2) DEFAULT NULL,
+   PRIMARY KEY  (`id`)
 ) ENGINE=InnoDB;
 
 -----------------------------------------------------------
@@ -5390,6 +5391,15 @@ CREATE TABLE `patient_data` (
   `guardianphone` TEXT,
   `guardianworkphone` TEXT,
   `guardianemail` TEXT,
+   parent_first VARCHAR (255) DEFAULT NULL,
+  `parent_last` VARCHAR (255) DEFAULT NULL,
+  `parent_mid` VARCHAR (255) DEFAULT NULL,
+  `parent_add1` TEXT,
+  `parent_add2` TEXT,
+  `parent_city` TEXT,
+  `parent_state` TEXT,
+  `parent_zip` TEXT,
+  `parent_phone` TEXT,
   UNIQUE KEY `pid` (`pid`),
   KEY `id` (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=1 ;
@@ -7004,6 +7014,9 @@ CREATE TABLE `procedure_providers` (
   `results_path` varchar(255) NOT NULL DEFAULT '',
   `notes`        text,
   `lab_director` bigint(20) NOT NULL DEFAULT '0',
+  `mirth_lab_name` VARCHAR(255) DEFAULT NULL,
+  `local_requisition` TINYINT(4) DEFAULT '0',
+  `mirth_lab_id` SMALLINT(6) DEFAULT NULL,
   PRIMARY KEY (`ppid`)
 ) ENGINE=InnoDB;
 
@@ -7026,6 +7039,10 @@ CREATE TABLE `procedure_type` (
   `seq`                 int(11)      NOT NULL default 0  COMMENT 'sequence number for ordering',
   `activity`            tinyint(1)   NOT NULL default 1  COMMENT '1=active, 0=inactive',
   `notes`               varchar(255) NOT NULL default '' COMMENT 'additional notes to enhance description',
+  `mirth_lab_id`        SMALLINT(6) DEFAULT NULL,
+  `suffix`              VARCHAR(50) NOT NULL DEFAULT '',
+  `pap_indicator`       VARCHAR(5) DEFAULT NULL,
+  `specimen_state`      VARCHAR(5) DEFAULT NULL,
   PRIMARY KEY (`procedure_type_id`),
   KEY parent (parent)
 ) ENGINE=InnoDB;
@@ -7034,14 +7051,19 @@ CREATE TABLE `procedure_questions` (
   `lab_id`              bigint(20)   NOT NULL DEFAULT 0   COMMENT 'references procedure_providers.ppid to identify the lab',
   `procedure_code`      varchar(31)  NOT NULL DEFAULT ''  COMMENT 'references procedure_type.procedure_code to identify this order type',
   `question_code`       varchar(31)  NOT NULL DEFAULT ''  COMMENT 'code identifying this question',
-  `seq`                 int(11)      NOT NULL default 0   COMMENT 'sequence number for ordering',
-  `question_text`       varchar(255) NOT NULL DEFAULT ''  COMMENT 'descriptive text for question_code',
-  `required`            tinyint(1)   NOT NULL DEFAULT 0   COMMENT '1 = required, 0 = not',
-  `maxsize`             int          NOT NULL DEFAULT 0   COMMENT 'maximum length if text input field',
-  `fldtype`             char(1)      NOT NULL DEFAULT 'T' COMMENT 'Text, Number, Select, Multiselect, Date, Gestational-age',
+  `seq`                 INT(11) DEFAULT '0' COMMENT 'sequence number for ordering',
+  `question_text`       VARCHAR (255) DEFAULT '' NULL COMMENT 'descriptive text for question_code',
+  `required`            TINYINT (1) DEFAULT 0 NULL COMMENT '1 = required, 0 = not',
+  `maxsize`             INT (11) DEFAULT 0 NULL COMMENT 'maximum length if text input field',
+  `fldtype`             CHAR(1)      DEFAULT 'T' COMMENT 'Text, Number, Select, Multiselect, Date, Gestational-age',
   `options`             text                              COMMENT 'choices for fldtype S and T',
-  `tips`                varchar(255) NOT NULL DEFAULT ''  COMMENT 'Additional instructions for answering the question',
-  `activity`            tinyint(1)   NOT NULL DEFAULT 1   COMMENT '1 = active, 0 = inactive',
+  `tips`                VARCHAR (255) DEFAULT '' NULL COMMENT 'Additional instructions for answering the question',
+  `activity`            tinyint(1)   NOT NULL DEFAULT 1   COMMENT '1 = active, 0 = inactive',  
+  `mirth_lab_id`        SMALLINT(6) DEFAULT NULL,
+  `specimen_case`       CHAR(1) DEFAULT NULL COMMENT 'Specimen case',
+  `question_component`  VARCHAR(255) DEFAULT NULL,
+  `options_value`       TEXT COMMENT 'option values of select',
+   `hl7_segment`        VARCHAR(25) DEFAULT NULL COMMENT 'hl7 segment position for labcorp',
   PRIMARY KEY (`lab_id`, `procedure_code`, `question_code`)
 ) ENGINE=InnoDB;
 
@@ -7065,6 +7087,21 @@ CREATE TABLE `procedure_order` (
   `clinical_hx`            varchar(255) NOT NULL DEFAULT '' COMMENT 'clinical history text that may be relevant to the order',
   `external_id` VARCHAR(20) DEFAULT NULL,
   `history_order` enum('0','1') DEFAULT '0' COMMENT 'references order is added for history purpose only.',
+  `psc_hold` VARCHAR(30) DEFAULT NULL,
+  `result_file_url` VARCHAR(50) DEFAULT NULL,
+  `return_comments` TEXT,
+  `review_comments` TEXT,
+  `reviewed_by` VARCHAR(255) DEFAULT NULL,
+  `signed_by` VARCHAR(255) DEFAULT NULL,
+  `ord_group` INT(10) DEFAULT '0',
+  `cor` VARCHAR(30) DEFAULT 'No',
+  `courtesy_copy` TEXT COMMENT 'where to send the copy of result; only for labcorp',
+  `billto` VARCHAR(5) DEFAULT NULL, 
+  `internal_comments` TEXT,
+  `abn` VARCHAR(30) DEFAULT 'No',
+  `storage_type` TINYINT(4) DEFAULT NULL,
+  `couch_rev_id` VARCHAR(255) DEFAULT NULL,
+  `requisition_file_url` VARCHAR(50) DEFAULT NULL,  
   PRIMARY KEY (`procedure_order_id`),
   KEY datepid (date_ordered, patient_id),
   KEY `patient_id` (`patient_id`)
@@ -7079,6 +7116,9 @@ CREATE TABLE `procedure_order_code` (
   `diagnoses`           text                                COMMENT 'diagnoses and maybe other coding (e.g. ICD9:111.11)',
   `do_not_send`         tinyint(1)  NOT NULL DEFAULT '0'    COMMENT '0 = normal, 1 = do not transmit to lab',
   `procedure_order_title` varchar( 255 ) NULL DEFAULT NULL,
+   `specimen_details` TEXT COMMENT 'specimen details only for LabCorp',
+   `procedure_suffix` VARCHAR (50) DEFAULT NULL,
+   `patient_instructions` TEXT,
   PRIMARY KEY (`procedure_order_id`, `procedure_order_seq`)
 ) ENGINE=InnoDB;
 
@@ -7123,6 +7163,9 @@ CREATE TABLE `procedure_result` (
   `comments`            text                             COMMENT 'comments from the lab',
   `document_id`         bigint(20)   NOT NULL DEFAULT 0  COMMENT 'references documents.id if this result is a document',
   `result_status`       varchar(31)  NOT NULL DEFAULT '' COMMENT 'preliminary, cannot be done, final, corrected, incompete...etc.',
+  `order_title` VARCHAR(255) DEFAULT NULL,
+  `profile_title` VARCHAR(255) DEFAULT NULL,
+  `code_suffix` VARCHAR(255) DEFAULT NULL,
   PRIMARY KEY (`procedure_result_id`),
   KEY procedure_report_id (procedure_report_id)
 ) ENGINE=InnoDB;
@@ -9948,3 +9991,154 @@ CREATE TABLE `form_therapy_groups_attendance` (
   activity	tinyint(4),
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB ;
+
+-- -------------------------------------------------------
+--
+-- Tables for module_menu
+--
+DROP TABLE IF EXISTS `module_menu`;
+CREATE TABLE `module_menu` (
+  `menu_id` INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+  `module_id` INT(10) UNSIGNED NOT NULL,
+  `menu_name` VARCHAR(45) NOT NULL,
+  `parent_id` INT(10) UNSIGNED NOT NULL,
+  `controller_name` VARCHAR(45) NOT NULL,
+  `action` VARCHAR(45) NOT NULL,
+  `icon` VARCHAR(45) NOT NULL,
+  `status` TINYINT(1) UNSIGNED NOT NULL,
+  `group_id` INT(10) UNSIGNED NOT NULL,
+  `order_id` INT(10) UNSIGNED NOT NULL,
+  `url` VARCHAR(225) NOT NULL,
+  PRIMARY KEY (`menu_id`)
+) ENGINE=INNODB;
+
+
+INSERT INTO `module_menu` (`menu_id`,`module_id`,`menu_name`,`parent_id`,`controller_name`,`action`,`icon`,`status`,`group_id`,`order_id`,`url`) VALUES 
+ (1,1,'Procedure Order',0,'lab','order','icon-multiple',1,10,1,'');
+INSERT INTO `module_menu` (`menu_id`,`module_id`,`menu_name`,`parent_id`,`controller_name`,`action`,`icon`,`status`,`group_id`,`order_id`,`url`) VALUES 
+ (2,1,'Results',0,'result','index','icon-labresultsingle',1,20,1,'');
+INSERT INTO `module_menu` (`menu_id`,`module_id`,`menu_name`,`parent_id`,`controller_name`,`action`,`icon`,`status`,`group_id`,`order_id`,`url`) VALUES 
+ (4,1,'Batch Results',2,'resultnew','index','icon-sum',1,20,2,'');
+INSERT INTO `module_menu` (`menu_id`,`module_id`,`menu_name`,`parent_id`,`controller_name`,`action`,`icon`,`status`,`group_id`,`order_id`,`url`) VALUES 
+ (5,2,'Test',0,'test','index','test',1,10,1,'');
+INSERT INTO `module_menu` (`menu_id`,`module_id`,`menu_name`,`parent_id`,`controller_name`,`action`,`icon`,`status`,`group_id`,`order_id`,`url`) VALUES 
+ (6,1,'Result Entry',2,'result','resultEntry','icon-resultentry',1,20,3,'');
+INSERT INTO `module_menu` (`menu_id`,`module_id`,`menu_name`,`parent_id`,`controller_name`,`action`,`icon`,`status`,`group_id`,`order_id`,`url`) VALUES 
+ (7,1,'Unassociated Results',2,'unassociated','index','icon-unassociatedresult',1,20,4,'');
+INSERT INTO `module_menu` (`menu_id`,`module_id`,`menu_name`,`parent_id`,`controller_name`,`action`,`icon`,`status`,`group_id`,`order_id`,`url`) VALUES 
+ (8,1,'Pull Compendium',0,'pull','index','icon-pull',1,30,1,'');
+INSERT INTO `module_menu` (`menu_id`,`module_id`,`menu_name`,`parent_id`,`controller_name`,`action`,`icon`,`status`,`group_id`,`order_id`,`url`) VALUES 
+ (9,1,'Procedure Configuration',8,'configuration','index','icon-config',1,30,2,'');
+INSERT INTO `module_menu` (`menu_id`,`module_id`,`menu_name`,`parent_id`,`controller_name`,`action`,`icon`,`status`,`group_id`,`order_id`,`url`) VALUES 
+ (10,1,'Specimen Collection',0,'specimen','index','icon-specimencollection',1,40,1,'');
+INSERT INTO `module_menu` (`menu_id`,`module_id`,`menu_name`,`parent_id`,`controller_name`,`action`,`icon`,`status`,`group_id`,`order_id`,`url`) VALUES 
+ (11,1,'Providers',0,'provider','index','icon-providers',1,50,1,'');
+ 
+-- -------------------------------------------------------
+--
+-- Tables for procedure_specimen
+--
+DROP TABLE IF EXISTS `procedure_specimen`;
+CREATE TABLE `procedure_specimen` (
+  `procedure_specimen_id` bigint(20) NOT NULL AUTO_INCREMENT,
+  `specimen_descriptor` varchar(255) DEFAULT NULL,
+  `specimen_term` varchar(255) DEFAULT NULL,
+ `specimen_type` CHAR(1) NULL,
+  PRIMARY KEY (`procedure_specimen_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
+-- -------------------------------------------------------
+--
+-- Tables for procedure_result_unassociated
+--
+DROP TABLE IF EXISTS `procedure_result_unassociated`;
+CREATE TABLE `procedure_result_unassociated` (
+  `id` bigint(20) NOT NULL AUTO_INCREMENT,
+  `patient_name` varchar(255) DEFAULT NULL,
+  `file_pid` bigint(20) DEFAULT NULL,
+  `file_order_id` varchar(255) DEFAULT NULL,
+  `file_location` varchar(500) DEFAULT NULL,
+  `attached` tinyint(4) DEFAULT '0',
+  `comment` varchar(1000) DEFAULT NULL,
+  PRIMARY KEY (`id`)
+)ENGINE=InnoDB;
+
+
+-- -------------------------------------------------------
+--
+-- Tables for procedure_subtest_result
+--
+DROP TABLE IF EXISTS `procedure_subtest_result`;
+CREATE TABLE `procedure_subtest_result` (
+  `procedure_subtest_result_id` BIGINT(20) NOT NULL AUTO_INCREMENT,
+  `procedure_report_id` BIGINT(20) NOT NULL COMMENT 'references procedure_report.procedure_report_id',
+  `subtest_code` VARCHAR(30) NOT NULL DEFAULT '',
+  `subtest_desc` VARCHAR(255) NOT NULL DEFAULT '',
+  `result_value` VARCHAR(255) NOT NULL DEFAULT '',
+  `units` VARCHAR(30) NOT NULL DEFAULT '',
+  `range` VARCHAR(255) NOT NULL DEFAULT '',
+  `abnormal_flag` VARCHAR(31) NOT NULL DEFAULT '' COMMENT 'no,yes,high,low',
+  `result_status` VARCHAR(31) NOT NULL DEFAULT '' COMMENT 'preliminary, cannot be done, final, corrected, incompete...etc.',
+  `result_time` DATETIME DEFAULT NULL,
+  `provider_name` VARCHAR(255) DEFAULT NULL,
+  `comments` TEXT NOT NULL COMMENT 'comments of subtest',
+  `order_title` VARCHAR(255) DEFAULT NULL,
+  `code_suffix` VARCHAR(255) DEFAULT NULL,
+  `profile_title` VARCHAR(255) DEFAULT NULL,
+  `providers_id` INT(11) DEFAULT NULL,
+  `facility` VARCHAR(255) DEFAULT NULL,
+  `last_modified_date` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'Last modified date',
+  PRIMARY KEY (`procedure_subtest_result_id`),
+  KEY `procedure_report_id` (`procedure_report_id`)
+) ENGINE=INNODB;
+
+
+-- -------------------------------------------------------
+--
+-- Tables for procedure_subtest_result_only
+--
+DROP TABLE IF EXISTS `procedure_subtest_result_only`;
+CREATE TABLE `procedure_subtest_result_only` (
+  `lab_result_id` bigint(20) NOT NULL,
+  `subtest_code` varchar(30) NOT NULL DEFAULT '',
+  `subtest_desc` varchar(255) NOT NULL DEFAULT '',
+  `result_value` varchar(255) NOT NULL DEFAULT '',
+  `units` varchar(30) NOT NULL DEFAULT '',
+  `range` varchar(255) NOT NULL DEFAULT '',
+  `abnormal_flag` varchar(31) NOT NULL DEFAULT '',
+  `result_status` varchar(31) NOT NULL DEFAULT '',
+  `provider_name` varchar(255) DEFAULT NULL,
+  `result_time` datetime DEFAULT NULL,
+  `performing_lab` varchar(255) DEFAULT NULL,
+  `comments` text,
+  `order_title` varchar(255) DEFAULT NULL
+) ENGINE=InnoDB;
+
+-- -------------------------------------------------------
+--
+-- Tables for procedure_result_only
+--
+DROP TABLE IF EXISTS `procedure_result_only`;
+CREATE TABLE `procedure_result_only` (
+  `lab_result_id` BIGINT (20) NOT NULL,
+  `patient_lname` VARCHAR (255) DEFAULT NULL,
+  `patient_fname` VARCHAR (255) DEFAULT NULL,
+  `patient_dob` DATE DEFAULT NULL,
+  `patient_gender` VARCHAR (30) DEFAULT NULL,
+  `patient_home_phone` VARCHAR (255) DEFAULT NULL,
+  `patient_work_phone` VARCHAR (255) DEFAULT NULL,
+  `patient_ss_no` VARCHAR (255) DEFAULT NULL,
+  `date` DATETIME DEFAULT NULL,
+  `result_status` VARCHAR (255) DEFAULT NULL,
+  `specimen_id` VARCHAR (255) DEFAULT NULL,
+  `order_level_comment` VARCHAR (255) DEFAULT NULL,
+  `performing_lab_addr1` VARCHAR (50) DEFAULT NULL,
+  `performing_lab_addr2` VARCHAR (50) DEFAULT NULL,
+  `performing_lab_city` VARCHAR (50) DEFAULT NULL,
+  `performing_lab_state` VARCHAR (30) DEFAULT NULL,
+  `performing_lab_zip` VARCHAR (20) DEFAULT NULL,
+  `performing_lab_phone` VARCHAR (20) DEFAULT NULL,
+  `performing_lab_provider` VARCHAR (255) DEFAULT NULL,
+  `performing_lab_name` VARCHAR (255) DEFAULT NULL,
+  `procedure_order_id` BIGINT (20) DEFAULT NULL
+) ENGINE = INNODB ;

@@ -1,0 +1,158 @@
+<?php
+/* +-----------------------------------------------------------------------------+
+ *    OpenEMR - Open Source Electronic Medical Record
+ *    Copyright (C) 2013 Z&H Consultancy Services Private Limited <sam@zhservices.com>
+ *
+ *    This program is free software: you can redistribute it and/or modify
+ *    it under the terms of the GNU Affero General Public License as
+ *    published by the Free Software Foundation, either version 3 of the
+ *    License, or (at your option) any later version.
+ *
+ *    This program is distributed in the hope that it will be useful,
+ *    but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *    GNU Affero General Public License for more details.
+ *
+ *    You should have received a copy of the GNU Affero General Public License
+ *    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *    @author  Sanal Jacob <sanalj@zhservices.com>
+ * +------------------------------------------------------------------------------+
+ */
+?>
+<style>
+    .labHeader{font-size: 60px;float: right;text-align: right;text-height: max-size}
+    table { 
+        font-family: cursive;
+        font-size: 10px;    
+    }
+    table.local { 
+        font-family: cursive;
+        font-size: 10px;    
+    }
+    table.footerTable { 
+        border-style: dashed;
+        border-width: 1px;
+        border-color: #CACACA;
+    }
+    td.borderOk{  
+        border-style: solid;
+        border-width: 1px;
+        border-color: #252525;
+        padding-left: 10px;
+        padding-top: 2px;
+        padding-bottom: 2px;
+        border-collapse: collapse;
+        overflow: hidden;
+    }
+    td.borderO{  
+        border-style: solid;
+        border-width: 1px;
+        border-color: #252525;
+        border-collapse: collapse;
+        overflow: hidden;
+    }
+    td.borderFade{  
+        border-style: solid;
+        border-width: 1px;
+        border-color: #CACACA;
+        padding-left: 10px;
+        padding-top: 10px;
+        padding-bottom: 10px;
+    }
+    td.tdHead{
+        font-weight: bold;
+        padding-top: 10px;
+    }
+    td.footTd{
+        border-style: dashed;
+        border-width: 1px;
+        border-color: #CACACA;
+        height: 20px;
+    }
+    table.print-friendly tr td, table.print-friendly tr th {
+        page-break-inside:avoid; 
+        page-break-after:auto;
+    }   
+    @page { 
+        margin: 50px 50px 0px 50px;
+        counter-increment: page;   
+    }
+    #content { padding: 0px; margin: 100px 0px 60px 0px; }
+</style>
+<?php
+?>
+<div id="content" > 
+    <table border="1" style="width: 100%"  cellpadding="2" cellspacing="0" class="local">
+        <tr>
+            <td style="text-align: center;"  colspan="6">
+                <div class="labHeader">         
+                    <?php echo xlt('Singulex Result'); ?>          
+                </div>
+            </td>
+        </tr>
+    </table>
+    <div style="background-color: #000;f-color: #ffffff;text-align: center;font: small-caption  "><font color="white"><?php echo xlt('Patient Information'); ?></font></div>
+    <table border="1" style="width: 100%"  cellpadding="2" cellspacing="0" class="local">
+        <tr>
+            <td class="borderOk"><?php echo xlt('Patient Name'); ?></td>
+            <td class="borderOk"><?php echo xlt('DOB'); ?></td>
+            <td class="borderOk"><?php echo xlt('Gender'); ?></td>
+            <td class="borderOk"><?php echo xlt('Home Phone'); ?></td>
+            <td class="borderOk"><?php echo xlt('Work Phone'); ?></td>
+            <td class="borderOk"><?php echo xlt('Provider Name'); ?></td>       
+        </tr>
+        <tr>
+            <td class="borderOk"><?php echo $this->patDetails['patient_lname'] . ',' . $this->patDetails['patient_fname']; ?></td>
+            <td class="borderOk"><?php echo $this->patDetails['patient_dob']; ?></td>
+            <td class="borderOk"><?php echo $this->patDetails['patient_gender']; ?></td>
+            <td class="borderOk"><?php echo $this->patDetails['patient_home_phone']; ?></td>
+            <td class="borderOk"><?php echo $this->patDetails['patient_work_phone']; ?></td>
+            <td class="borderOk"><?php echo $this->patDetails['provider_name']; ?></td>      
+        </tr>
+    </table>  
+    <br><br>
+    <div style="background-color: #000;f-color: #ffffff;text-align: center;font: small-caption  "><font color="white"><?php echo xlt('Result Details'); ?></font></div>
+    <table border="1" style="width: 100%"  cellpadding="2" cellspacing="0" class="local">
+        <tr>
+            <td class="borderOk"><?php echo xlt('Sl no'); ?></td>
+            <td class="borderOk"><?php echo xlt('Test Code'); ?></td>
+            <td class="borderOk"><?php echo xlt('Test Name'); ?></td>
+            <td class="borderOk"><?php echo xlt('Order Title'); ?></td>
+            <td class="borderOk"><?php echo xlt('Result Status'); ?></td>
+            <td class="borderOk"><?php echo xlt('Specimen ID'); ?></td>    
+            <td class="borderOk"><?php echo xlt('Result'); ?></td>
+            <td class="borderOk"><?php echo xlt('Unit'); ?></td>
+            <td class="borderOk"><?php echo xlt('Range'); ?></td>
+            <td class="borderOk"><?php echo xlt('Abnormal'); ?></td>      
+            <td class="borderOk"><?php echo xlt('Comments'); ?></td>
+            <td class="borderOk"><?php echo xlt('Result Time'); ?></td>
+            <td class="borderOk"><?php echo xlt('Performing Lab'); ?></td>
+        </tr>    
+        <?php
+        $i = 1;
+        foreach ($this->resultDetails as $result):
+            ?>
+            <tr>
+                <td class="borderOk"><br><?php echo $i; ?></td>
+                <td class="borderOk"><br><?php echo $result['subtest_code']; ?></td>
+                <td class="borderOk"><br><?php echo $result['subtest_desc']; ?></td>
+                <td class="borderOk"><br><?php echo $result['order_title']; ?></td>
+                <td class="borderOk"><br><?php echo $result['result_status']; ?></td>
+                <td class="borderOk"><br><?php echo $this->patDetails['specimen_id']; ?></td>
+                <td class="borderOk"><br><?php echo $result['result_value']; ?></td>
+                <td class="borderOk"><br><?php echo $result['units']; ?></td>
+                <td class="borderOk"><br><?php echo $result['range']; ?></td>
+                <td class="borderOk"><br><?php echo $result['abnormal_flag']; ?></td>      
+                <td class="borderOk"><br><?php echo $result['comments']; ?></td>
+                <td class="borderOk"><br><?php echo $result['result_time']; ?></td>
+                <td class="borderOk"><br><?php echo $result['performing_lab']; ?></td>
+            </tr>
+            <?php
+            $i++;
+        endforeach;
+        ?>    
+    </table>  
+</div>
+<script>
+    window.print();
+</script>

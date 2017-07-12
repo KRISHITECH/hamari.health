@@ -1,0 +1,546 @@
+<?php
+/* +-----------------------------------------------------------------------------+
+ *    OpenEMR - Open Source Electronic Medical Record
+ *    Copyright (C) 2013 Z&H Consultancy Services Private Limited <sam@zhservices.com>
+ *
+ *    This program is free software: you can redistribute it and/or modify
+ *    it under the terms of the GNU Affero General Public License as
+ *    published by the Free Software Foundation, either version 3 of the
+ *    License, or (at your option) any later version.
+ *
+ *    This program is distributed in the hope that it will be useful,
+ *    but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *    GNU Affero General Public License for more details.
+ *
+ *    You should have received a copy of the GNU Affero General Public License
+ *    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *    @author  Sanal Jacob <sanalj@zhservices.com>
+ * +------------------------------------------------------------------------------+
+ */
+?>
+<style>
+    table.gridview2 td{
+        border-style: dotted;
+        border-width: 1px 1px 1px 1px;
+        margin: 0;padding: 0;
+        border-color:#cccccc;
+    }
+
+    table.thcolor th{
+        background:linear-gradient(to bottom, #EFF5FF 0px, #E0ECFF 100%) repeat-x scroll 0 0 transparent;
+        border: 1px solid #cccccc;
+        height:25px; 
+    }
+
+    .odd_row{
+        background-color: #f0f0f0;
+        height: 35px;
+        vertical-align: middle;
+        font-size:small ;
+        color: midnightblue;
+    }
+
+    .commentDiv {
+        border:2px solid #0094ff;
+        -webkit-border-top-left-radius:6px;
+        -webkit-border-top-right-radius:6px;
+        -moz-border-radius-topleft:6px;
+        -moz-border-radius-topright:6px;
+        border-top-left-radius:6px;
+        border-top-right-radius:6px;
+        width:600px;
+        font-size:12pt; /* or whatever */
+        text-align: center;
+    }
+
+    .commentDiv h2 {
+        padding:4px;
+        color:#fff;
+        margin:0;
+        background-color:#0094ff;
+        font-size:12pt; /* or whatever */
+    }
+
+    .spanStyle {
+        border:1px solid #0094ff;
+        -webkit-border-top-left-radius:6px;
+        -webkit-border-top-right-radius:6px;
+        -moz-border-radius-topleft:6px;
+        -moz-border-radius-topright:6px;
+        border-top-left-radius:6px;
+        border-top-right-radius:6px;
+        font-size:10pt; /* or whatever */
+        text-align: center;
+        cursor: pointer;
+        padding:4px;
+        color:#fff;
+        margin:0;
+        width:80px;
+        background-color:#0094ff;
+    }
+
+    .pagination {
+        background: #FFFFFF;
+        padding: 20px;
+        margin-bottom: 20px;
+        width: 70% ;
+        margin-left: auto ;
+        margin-right: auto ;
+    }
+
+    .page {
+        display: inline-block;
+        padding: 0px 9px;
+        margin-right: 4px;
+        border-radius: 3px;
+        border: solid 1px #c0c0c0;
+        background: #e9e9e9;
+        box-shadow: inset 0px 1px 0px rgba(255,255,255, .8), 0px 1px 3px rgba(0,0,0, .1);
+        font-size: .875em;
+        font-weight: bold;
+        text-decoration: none;
+        color: #717171;
+        text-shadow: 0px 1px 0px rgba(255,255,255, 1);
+    }
+
+    .page:hover, .page.gradient:hover {
+        background: #fefefe;
+        background: -webkit-gradient(linear, 0% 0%, 0% 100%, from(#FEFEFE), to(#f0f0f0));
+        background: -moz-linear-gradient(0% 0% 270deg,#FEFEFE, #f0f0f0);
+    }
+
+    .page.active {
+        border: none;
+        background: #616161;
+        box-shadow: inset 0px 0px 8px rgba(0,0,0, .5), 0px 1px 0px rgba(255,255,255, .8);
+        color: #f0f0f0;
+        text-shadow: 0px 0px 3px rgba(0,0,0, .5);
+    }
+
+    .page.gradient {
+        background: -webkit-gradient(linear, 0% 0%, 0% 100%, from(#f8f8f8), to(#e9e9e9));
+        background: -moz-linear-gradient(0% 0% 270deg,#f8f8f8, #e9e9e9);
+    }
+
+    #tfheader{
+        background-color:#f0f0f0;
+    }
+
+    #tfnewsearch{
+        float:right;
+        padding:20px;
+    }
+
+    .tftextinput2{
+        margin: 0;
+        padding: 5px 15px;
+        font-family: Arial, Helvetica, sans-serif;
+        font-size:14px;
+        color:#666;
+        border:1px solid #0076a3;;
+        border-top-left-radius: 5px 5px;
+        border-bottom-left-radius: 5px 5px;
+        border-top-right-radius: 5px 5px;
+        border-bottom-right-radius: 5px 5px;
+    }
+
+    .tfbutton2 {
+        margin: 0;
+        padding: 5px 7px;
+        font-family: Arial, Helvetica, sans-serif;
+        font-size:14px;
+        font-weight:bold;
+        outline: none;
+        cursor: pointer;
+        text-align: center;
+        text-decoration: none;
+        color: #ffffff;
+        border: solid 1px #0076a3; border-right:0px;
+        background: #0095cd;
+        background: -webkit-gradient(linear, left top, left bottom, from(#00adee), to(#0078a5));
+        background: -moz-linear-gradient(top,  #00adee,  #0078a5);
+        border-top-right-radius: 5px 5px;
+        border-bottom-right-radius: 5px 5px;
+        border-top-left-radius: 5px 5px;
+        border-bottom-left-radius: 5px 5px;
+    }
+
+    .tfbutton2:hover {
+        text-decoration: none;
+        background: #007ead;
+        background: -webkit-gradient(linear, left top, left bottom, from(#0095cc), to(#00678e));
+        background: -moz-linear-gradient(top,  #0095cc,  #00678e);
+    }
+
+    /* Fixes submit button height problem in Firefox */
+    .tfbutton2::-moz-focus-inner {
+        border: 0;
+    }
+
+    .tfclear{
+        clear:both;
+    } 
+    a:visited {
+        color: #717171;
+    }
+</style>
+<script type="text/javascript">
+    $(document).ready(function() {
+        $('[id^="testdetails_"]').hide();
+        $("#report tr:odd").addClass("odd");
+        $("#report tr.odd").click(function() {
+            $(this).find(".arrow").toggleClass("up");
+        });
+        $("#expanderHead").click(function() {
+            if ($("#expanderHead").text() == "Expand All") {
+                $('[id^="testdetails_"]').slideDown();
+                $("#expanderHead").html("Collapse All");
+                $('[id^="expandSign_"]').text('-');
+            }
+            else {
+                $('[id^="testdetails_"]').slideUp();
+                $("#expanderHead").text("Expand All")
+                $('[id^="expandSign_"]').html('+');
+            }
+        });
+    });
+    function toggleMe(id) {
+        if ($('#' + id).css('display') == 'none') {
+            $("#" + id).show();
+        } else {
+            $("#" + id).hide();
+        }
+    }
+    function expanResult(id, expandId) {
+        $('[id^="' + id + '_"]').slideToggle();
+        if ($("#" + expandId).text() == "+") {
+            $("#" + expandId).html("-")
+        } else {
+            $("#" + expandId).text("+")
+        }
+    }
+    $(function() {
+        $.contextMenu({
+            selector: '.context-menu-one',
+            build: function($trigger) {
+                var options = {
+                    callback: function(key, options) {
+                        if (key == 'attach_to_current_patient') {
+                            var details = this.attr('id').split("-");
+                            $.post("unassociated/attach", {
+                                type: "attachToCurrentPatient",
+                                file_id: details[1],
+                                file_name: details[2],
+                            },
+                                    function(data) {
+                                        if (data.response == true) {
+                                            alert("Successfully attached to current patient's documents");
+                                        } else if (data.error) {
+                                            alert(data.error);
+                                        } else {
+                                            alert("Failed");
+                                        }
+                                        document.location.reload();
+                                    }, 'json');
+                        } else if (key == 'attach_to_order') {
+                            var details = this.attr('id').split("-");
+                            $.post("unassociated/attach", {
+                                type: "attachToOrder",
+                                file_id: details[1],
+                                file_name: details[2],
+                                file_order_id: details[3],
+                            },
+                                    function(data) {
+                                        if (data.response == true) {
+                                            alert("Successfully attached to current patient's documents");
+                                        } else if (data.error) {
+                                            alert(data.error);
+                                        } else {
+                                            alert("Failed");
+                                        }
+                                        document.location.reload();
+                                    }, 'json');
+                        }
+                    },
+                    items: {}
+                };
+                options.items.attach_to_current_patient = {name: "Attach To Current Patient"};
+                if ($trigger.hasClass('withorder')) {
+                    options.items.attach_to_order = {name: "Attach To Order"};
+                }
+                return options;
+            }
+        });
+    });
+</script>
+<div style="margin:10px 0;"></div>
+<div class="easyui-panel" title="<?php echo xlt('Unassociated Results'); ?>" >
+    <div style="padding:10px;">
+        <?php
+        $form = $this->form;
+        $form->setAttribute('action', $this->url('unassociated', array('action' => 'update')));
+        $form->prepare();
+        echo $this->form()->openTag($form);
+        if ($this->layout()->type == 'resolved') {
+            $resolved = "menu-active";
+        } elseif ($this->layout()->type == 'resultsonly') {
+            $resultsonly = "menu-active";
+        } else {
+            $pending = "menu-active";
+        }
+        ?>
+        <a href="unassociated" class="easyui-linkbutton <?php echo $pending; ?>" data-options="plain:true"><?php echo xlt('Pending Review'); ?></a>
+        <a href="unassociated?type=resolved" class="easyui-linkbutton <?php echo $resolved; ?>" data-options="plain:true"><?php echo xlt('Resolved'); ?></a>
+        <a href="unassociated?type=resultsonly&per=15&page=1" class="easyui-linkbutton <?php echo $resultsonly; ?>" data-options="plain:true"><?php echo xlt('Results Only'); ?></a>
+        <br/>
+        <?php
+        if ($this->layout()->type == 'resultsonly') {
+            ?>
+            <br />
+            <div id="tfheader">
+                <span>Provider : <?php echo $this->formRow($form->get('selectProvider')->setValue($this->layout()->selectProvider)); ?>
+                </span>
+            </div>
+            <br />
+            <div id="tfheader">
+                <span>Results Per Page : <?php echo $this->formRow($form->get('perPage')->setValue($this->layout()->per_page)); ?></span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                <span><?php echo $this->formRow($form->get('txtSearch')->setValue($this->layout()->nameTosearch)); ?></span>
+                <span><?php echo $this->formRow($form->get('txtDob')->setValue($this->layout()->dobTosearch)); ?></span>
+                <span><?php echo $this->formRow($form->get('btnSearch')); ?></span>
+                <span class="spanStyle" style="float: right;" id="expanderHead">Expand All</span>
+                <div class="tfclear"></div>
+            </div>
+            <table id="specimentable" cellspacing="0" cellpadding="0" class="dv-table gridview2 thcolor" border="1" style="width:100%;height:auto;background:#ffffff;padding:0px;margin-top:5px;margin-bottom:15px;" >
+                <tr>
+                    <th colspan="8" class="mainhead" ><?php echo xlt('Results');?></th>
+                </tr>
+                <tr style="width: 40px">
+                    <th><?php echo xlt('Slno');?></th>
+                    <th><?php echo xlt('Patient Name');?></th>
+                    <th><?php echo xlt('DOB');?></th>
+                    <th><?php echo xlt('Gender');?></th>
+                    <th><?php echo xlt('Home Phone');?></th>
+                    <th><?php echo xlt('Work Phone');?></th>
+                    <th><?php echo xlt('Provider Name');?></th>                                   
+                    <th><?php echo xlt('Action');?></th>                                   
+                </tr>
+                <?php
+                $class = "";
+                $curr_result_id = "";
+                $curr_test_name = "";
+                $curr_patient = "";
+                $curr_dob = "";
+                $testTitle = "";
+                $slno = 0;
+                $testId = 0;
+                foreach ($this->layout()->res_only as $val):
+                    if ($curr_result_id != $val['lab_result_id']) {
+                        if ($class == "odd_row") {
+                            $class = "even_row";
+                        } else {
+                            $class = "odd_row";
+                        }
+                        $slno++;
+                        ?>
+                        <tr class="<?php echo $class; ?>" >
+                            <td style='vertical-align: middle;text-align: center;width: fit-content' nowrap >&nbsp;<?php echo $slno; ?></td>
+                            <td style='vertical-align: middle;text-align: center;width: fit-content' nowrap >&nbsp;<?php echo $val['patient_lname'] . ' ' . $val['patient_fname']; ?></td>
+                            <td style='vertical-align: middle;text-align: center' >&nbsp;<?php echo $val['patient_dob']; ?></td>
+                            <td style='vertical-align: middle;text-align: center' >&nbsp;<?php echo $val['patient_gender']; ?></td>
+                            <td style='vertical-align: middle;text-align: center' >&nbsp;<?php echo $val['patient_home_phone']; ?></td>
+                            <td style='vertical-align: middle;text-align: center' >&nbsp;<?php echo $val['patient_work_phone']; ?></td>
+                            <td style='vertical-align: middle;text-align: center' >&nbsp;<?php echo $val['provider_name']; ?></td>
+                            <?php if (stripos($val['performing_lab_name'], 'labcorp') !== false || stripos($val['performing_lab_name'], 'ISO Programming') !== false || stripos($val['performing_lab_name'], 'Monogram Biosciences Inc') !== false): ?>
+                                <td style='vertical-align: middle;text-align: center' >
+                                    <a href="<?php echo $this->url('unassociated', array('action' => 'unassociatedresultpdf')) . '/' . $val['lab_result_id']; ?>" target="_blank" title="Click here to download the result as PDF" > <img src=<?php echo $this->basePath() . '/css/icons/pdf_icon.png'; ?> > </a>
+                                </td>
+                            <?php else: ?>
+                                <td>&nbsp;</td>
+                            <?php endif; ?>
+                        </tr>
+                        <?php
+                        //print_r($val);
+                        if (!empty($val['performing_lab_name'])):
+                            ?>
+                            <tr class="" id="" style="padding:10px;" >
+                                <td>&nbsp;</td>
+                                <td>&nbsp;</td>
+                                <td style="padding:10px;"><?php echo xlt('Performing Lab');?>:</td>
+                                <td colspan="5" style="width: 900px;padding:10px;color:green;">
+                                    <?php
+                                    if (stripos($val['performing_lab_name'], 'labcorp') !== false || stripos($val['performing_lab_name'], 'ISO Programming') !== false || stripos($val['performing_lab_name'], 'Monogram Biosciences') !== false):  // for labcorp results
+                                        $perform_labsArr = explode('#*#', $val['performing_lab_name']);
+                                        foreach ($perform_labsArr as $val1):
+                                            $perform_labs = explode('*#*', $val1);
+                                            $perform_labs_arr = explode(',', $perform_labs[0]);
+                                            echo!empty($perform_labs_arr[0]) ? $perform_labs_arr[0] . ',<br />' : '';
+                                            echo!empty($perform_labs_arr[1]) ? $perform_labs_arr[1] . ',<br />' : '';
+                                            echo!empty($perform_labs_arr[2]) ? $perform_labs_arr[2] . ',<br />' : '';
+                                            echo!empty($perform_labs_arr[3]) ? $perform_labs_arr[3] . ',<br />' : '';
+                                            echo!empty($perform_labs_arr[4]) ? $perform_labs_arr[4] . ',<br />' : '';
+                                            echo!empty($perform_labs_arr[5]) ? $perform_labs_arr[5] . ',<br />' : '';
+                                            echo!empty($perform_labs_arr[6]) ? $perform_labs_arr[6] . ',' . $perform_labs_arr[7] . '<br /><br />' : '';
+                                        endforeach;
+                                    else:
+                                        echo str_replace("*#*", ",", $val['performing_lab_name']) . (!empty($val['performing_lab_provider']) ? ' (' . $val['performing_lab_provider'] . ')' : '') . ",<br />";
+                                        echo $val['performing_lab_addr1'] . (!empty($val['performing_lab_addr2']) ? ', ' . $val['performing_lab_addr2'] : '') . ",<br />";
+                                        echo!empty($val['performing_lab_city']) ? $val['performing_lab_city'] . ',<br />' : '';
+                                        echo!empty($val['performing_lab_state']) ? $val['performing_lab_state'] . '' : '';
+                                        echo!empty($val['performing_lab_zip']) ? ' ' . $val['performing_lab_zip'] . ',<br />' : ',<br />';
+                                        echo!empty($val['performing_lab_phone']) ? $val['performing_lab_phone'] . '' : '';
+                                    endif;
+                                    ?>
+                                </td>
+                            </tr>
+                            <?php
+                        endif;
+                        ?>
+                        <?php if (!empty($val['order_level_comment'])): ?>
+                            <tr class="" id="" style="padding:10px;" >
+                                <td>&nbsp;</td>
+                                <td>&nbsp;</td>
+                                <td style="padding:10px;"><?php echo xlt('Order Comments');?>:</td>
+                                <td colspan="5" style="width: 900px;padding:10px;color:green;"><?php echo str_replace("*##*", "<br>", $val['order_level_comment']); ?></td>
+                            </tr>
+                            <?php
+                        endif;
+                        ?>
+
+                        <?php
+                    }
+                    if ($curr_result_id != $val['lab_result_id']) {
+                        if ($class == "odd_row") {
+                            $class = "even_row";
+                        } else {
+                            $class = "odd_row";
+                        }
+                    }
+                    ?>      
+                    <tr class="<?php echo $class; ?>" id="details_<?php echo $val['lab_result_id']; ?>" >
+                        <td>&nbsp;</td>
+                        <td>&nbsp;</td>
+                        <td colspan="6" style="width: 900px">                            
+
+                            <table id="report">
+                                <?php if ($curr_result_id != $val['lab_result_id']) { ?>
+                                    <tr>                                        
+                                        <td><strong><?php echo xlt('Test Title');?></strong></td>
+                                        <td><strong><?php echo xlt('Test Name');?></strong></td>
+                                        <td><strong><?php echo xlt('Result');?></strong></td>
+                                        <td><strong><?php echo xlt('Abnormal');?></strong></td>
+                                        <td><h4 style="cursor:pointer;"><span class="commentDiv" id="expandSign_<?php echo $val['lab_result_id']; ?>" onclick="javascript:expanResult('testdetails_<?php echo $val['lab_result_id']; ?>', 'expandSign_<?php echo $val['lab_result_id']; ?>');">+</span></h4></td>
+                                    </tr>
+                                <?php } $testId++; ?>                                
+                                <tr class="odd" onclick="javascript:toggleMe('testdetails_<?php echo $val['lab_result_id'] . '_' . $testId; ?>');">                                    
+                                    <td style="width:15%;"><?php if ($testTitle != $val['order_title']) echo $val['order_title']; ?></td>
+                                    <td style="width:25%;"><?php echo $val['subtest_desc']; ?></td>
+                                    <td style="width:25%;"><?php echo $val['result_value'] . ' ' . $val['units']; ?></td>                                                                     
+                                    <td style="width:15%;"><?php echo $val['abnormal_flag']; ?></td>                                                                     
+                                    <td style="width:5%;"><div class="arrow"></div></td>
+                                </tr>
+                                <tr id="testdetails_<?php echo $val['lab_result_id'] . '_' . $testId; ?>">
+                                    <td colspan="3" align="left" valign="top">
+                                        <br><br>
+                                        <table border="1" style="border: #000;" id="insider" style="table-layout: fixed;">                                                                                      
+                                            <tr>
+                                                <td><?php echo xlt('Order Title');?></td>
+                                                <td> <?php echo $val['order_title']; ?></td>
+                                            </tr>
+                                            <tr>
+                                                <td><?php echo xlt('Result Status');?></td>
+                                                <td> <?php echo $val['result_status']; ?></td>
+                                            </tr>
+                                            <tr>
+                                                <td><?php echo xlt('Specimen Id');?></td>
+                                                <td> <?php echo $val['specimen_id']; ?></td>
+                                            </tr>
+                                            <tr>
+                                                <td><?php echo xlt('Subtest Code');?></td>
+                                                <td> <?php echo $val['subtest_code']; ?> </td>
+                                            </tr>
+                                            <tr>
+                                                <td><?php echo xlt('Range');?></td>
+                                                <td> <?php echo $val['range']; ?></td>
+                                            </tr>
+                                            <tr class="">
+                                                <td><?php echo xlt('Result Time');?></td>
+                                                <td> <?php echo $val['result_time']; ?></td>
+                                            </tr>
+                                            <?php
+                                            if (empty($val['performing_lab_name'])):
+                                                ?>
+                                                <tr>
+                                                    <td><?php echo xlt('Performing Lab');?></td>
+                                                    <td> <?php echo $val['performing_lab']; ?></td>
+                                                </tr>
+                                                <?php
+                                            endif;
+                                            ?>
+                                        </table>
+                                    </td>
+                                    <td colspan="4" align="left" valign="top">
+                                        <div class="commentDiv"><h2> <?php echo xlt('Comments');?> </h2></div>
+                                        <?php echo "<pre><br>" . str_replace(array("*##*", "\\r\\n"), array("<br>", "<br>"), $val[comments]) . "</pre>"; ?>
+                                    </td>
+                                </tr>                                
+                            </table>
+
+                        </td>                                            
+                    </tr>
+                    <?php
+                    $curr_result_id = $val['lab_result_id'];
+                    $curr_test_name = $val['order_title'];
+                    $curr_patient = $val['patient_fname'];
+                    $curr_dob = $val['patient_dob'];
+                    $testTitle = $val['order_title'];
+                endforeach;
+                ?>                
+            </table>  <?php
+            if ($this->layout()->errorMsg) {
+                echo "<div class='alert-box error'><span>error: </span>" . $this->layout()->errorMsg . "</div>";
+            } else {
+                echo $this->layout()->pagination;
+            }
+        } else {
+            ?>
+            <table id="specimentable" class="dv-table gridview2 thcolor" style="width:99%;height:auto;background:#ffffff;padding:5px;margin-top:5px;margin-bottom:15px;" >
+                <tr>
+                    <th colspan="4" class="mainhead" ><?php echo ($this->layout()->type == 'resolved') ? 'Resolved' : 'Pending Review'; ?></th>
+                </tr>
+                <tr>
+                    <td class="bold smallfont" style="width:25%;" ><?php echo xlt('Patient Name');?></td>
+                    <td class="bold smallfont" style="width:25%;" ><?php echo xlt('Report');?></td>
+                    <td class="bold smallfont" style="width:40%;" ><?php echo xlt('Comments');?></td>
+                    <td class="bold smallfont" style="width:3%;" ><?php echo xlt('Resolved');?></td>
+                </tr>
+                <?php foreach ($this->layout()->res as $val): ?>
+                    <tr>
+                        <?php echo $this->formRow($form->get('id[]')->setValue($val['id'])); ?>
+                        <td>&nbsp;<?php echo $val['patient_name']; ?></td>
+                        <td>&nbsp;<a class="context-menu-one <?php echo $val['file_order_id'] ? 'withorder' : ''; ?>" id="file-<?php echo $val['id'] . "-" . $val['file_location'] . "-" . $val['file_order_id']; ?>" href="unassociated/view?filename=<?php echo $val['file_location']; ?>" >View File</a></td>
+                        <?php if ($this->layout()->type != 'resolved') { ?>
+                            <td><?php echo $this->formRow($form->get('comments[]')->setValue($val['comment'])); ?></td>
+                        <?php } else { ?>
+                            <td><?php echo $this->formRow($form->get('comments_readonly')->setValue($val['comment'])); ?></td>
+                            <?php
+                        }
+                        ?>
+                        <td>&nbsp;<?php echo $val['attached'] ? 'Yes' : 'No'; ?></td>
+                    </tr>
+                <?php endforeach; ?>
+            </table>
+            <?php
+        }
+        ?>
+    </div>
+</div>
+<?php
+echo $this->form()->closeTag();
+echo $this->headScript()->prependFile($this->basePath() . '/js/lib/jquery.ui.position.js')
+        ->prependFile($this->basePath() . '/js/lib/jquery.contextMenu.js')
+        ->prependFile($this->basePath() . '/js/lib/jquery-1.8.2.min.js')
+        ->prependFile($this->basePath() . '/js/lab/patient.js')
+        ->prependFile($this->basePath() . '/js/lib/jquery.autocomplete.js')
+        ->prependFile($this->basePath() . '/js/lib/jQuery.bubbletip-1.0.6.js')
+?>

@@ -1,0 +1,392 @@
+<?php
+/* +-----------------------------------------------------------------------------+
+ *    OpenEMR - Open Source Electronic Medical Record
+ *    Copyright (C) 2013 Z&H Consultancy Services Private Limited <sam@zhservices.com>
+ *
+ *    This program is free software: you can redistribute it and/or modify
+ *    it under the terms of the GNU Affero General Public License as
+ *    published by the Free Software Foundation, either version 3 of the
+ *    License, or (at your option) any later version.
+ *
+ *    This program is distributed in the hope that it will be useful,
+ *    but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *    GNU Affero General Public License for more details.
+ *
+ *    You should have received a copy of the GNU Affero General Public License
+ *    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *    @author  Sanal Jacob <sanalj@zhservices.com>
+ * +------------------------------------------------------------------------------+
+ */
+?>
+<style>
+  .labHeader{font-size: 60px;float: right;text-align: right;text-height: max-size}
+  table {     
+    font-size: 10px;
+    font-family: times;
+  }
+  table.local {    
+   font-family: times;
+  }
+ .clsNTEResuluts {     
+    font-size: 10px;
+    font-family: Courier;
+  }
+  table.footerTable { 
+    border-style: dashed;
+    border-width: 1px;
+    border-color: #CACACA;
+  }
+  td.borderOk{  
+    border-style: solid;
+    border-width: 1px;
+    border-color: #252525;
+    padding-left: 2px;
+    padding-top: 2px;
+    padding-bottom: 2px;
+    border-collapse: collapse;
+    overflow: hidden;       
+  }
+  td.borderO{  
+    border-style: solid;
+    border-width: 1px;
+    border-color: #252525;
+    border-collapse: collapse;
+    overflow: hidden;
+    padding-left: 2px;
+  }
+  td.borderFade{  
+    border-style: solid;
+    border-width: 1px;
+    border-color: #CACACA;
+    padding-left: 2px;
+    padding-top: 10px;
+    padding-bottom: 10px;
+  }
+  td.tdHead{
+    font-weight: bold;
+    padding-top: 10px;
+  }
+  td.footTd{
+    border-style: dashed;
+    border-width: 1px;
+    border-color: #CACACA;
+    height: 20px;
+  }
+  table.print-friendly tr td, table.print-friendly tr th {
+    page-break-inside:avoid; 
+    page-break-after:auto;
+  }   
+  @page { 
+    margin: 50px 50px 30px 50px;
+    counter-increment: page;   
+  }
+  #content1 { padding: 0px; margin: 0px 0px 0px 0px; width:98%; }
+   #content { padding: 0px; margin: 0px 0px 0px 0px; width:97%;   }
+   .divPadding{ height: 0.2em; width: 100%}
+</style>
+<?php
+
+  //convert digits into date with time format
+  if (!function_exists('toDate')) {
+
+    function toDate($date) {
+        if ($date != "") {
+            $day = substr($date, 6, 2);
+            $month = substr($date, 4, 2);
+            $year = substr($date, 0, 4);
+            $hour = substr($date, 8, 2);
+            $minute = substr($date, 10, 2);
+            if ($hour == "") {
+                $ret_date = $year . '/' . $month . '/' . $day;
+            } else {
+                $ret_date = $year . '/' . $month . '/' . $day . ' ' . $hour . ':' . $minute;
+            }
+        } else {
+            $ret_date = "";
+        }
+        return $ret_date;
+    }
+
+}
+  $test_arr                 = explode("#--#",$xmldata['test_ids']);
+  $result_test_arr          = explode("!-#@#-!",$xmldata['result_values']);
+  $resultcomments_test_arr  = explode("#-!!-#",$xmldata['res_report_comments']);
+  $patient_comments         = $xmldata['pat_report_comments'];
+  $performing_facility      = $xmldata['performing_lab'];
+  $dob                      = toDate($this->xmldata['pat_dob']); 
+
+?>
+<page backtop="26mm" backbottom="0mm" backleft="5mm" backright="5mm" >
+    <page_header >
+         <table style="width: 90%;" cellpadding="0" cellspacing="0"><tr>
+                          <td style="text-align: right; width: 100%">
+                              <?php echo xlt('Page');?> [[page_cu]] of [[page_nb]]
+                          </td>
+                      </tr></table>
+        <div id="content1" style="padding-left: 20px;">
+      <table border="1" style="width: 98%;"  cellpadding="0" cellspacing="0" class="local">
+    <tr >
+      <td style="text-align: center; font-size: 16px; width: 100%;"  align='center' colspan="4">         
+           <?php echo xlt('LabCorp Result');?>         
+      </td>
+    </tr>
+    <tr>
+        <td class="borderOk" style="width: 25%" ><?php echo xlt('Specimen Number');?><br><?php echo $this->xmldata['specimenNo']; ?></td>
+      <td class="borderOk" style="width: 25%"><?php echo xlt('Patient ID');?><br><?php echo $this->xmldata['pid']; ?></td>
+      <td class="borderOk" style=" background-color: #d3d3d3;width: 25%" ><?php echo xlt('Control Number');?><br><?php echo $this->xmldata['control_no']; ?></td>
+      <td class="borderOk"  style=" background-color: #d3d3d3;width: 25%" ><?php echo xlt('Account Number');?><br><?php echo $this->xmldata['account_no']; ?></td>
+    </tr>
+    <tr>
+      <td class="borderOk" ><?php echo xlt('Patient Last Name');?><br><?php echo $this->xmldata['patient_lname']; ?></td>  
+      <td class="borderOk" ><?php echo xlt('Patient First Name');?><br><?php echo $this->xmldata['patient_fname']; ?></td>
+      <td class="borderOk" colspan="2"><?php echo xlt('Patient Middle Name');?><br><?php echo $this->xmldata['patient_mname']; ?></td>
+    </tr>
+      </table>
+    </div>
+    </page_header>   
+  <table border="1" style="width: 100%;"  cellpadding="0" cellspacing="0" class="local">
+    <tr >
+        <td class="borderOk" style="width: 15%" ><?php echo xlt('Patient SS');?>#<br><?php echo $this->xmldata['pat_ss']; ?></td>
+      <td class="borderOk" style="width: 15%"><?php echo xlt('Patient Phone');?><br><?php echo $this->xmldata['pat_phone']; ?></td>      
+      <td class="borderOk" style="width: 14%"><?php echo xlt('Age');?><br><?php //if($dob) echo date_diff(date_create($dob), date_create('today'))->y; ?></td>
+      <td class="borderOk" style="width: 14%"><?php echo xlt('Date Of Birth(Y/M/D)');?><br><?php echo $dob; ?></td>
+      <td class="borderOk" style="width: 14%"><?php echo xlt('Gender');?><br><?php if($this->xmldata['pat_sex'] == "M") echo xlt("Male");else if($this->xmldata['pat_sex'] == "F") echo xlt("Female");else echo xlt("Unassigned"); ?></td>
+      <td class="borderOk" style="width: 14%"><?php echo xlt('Total Volume');?><br><?php echo $this->xmldata['tot_volume']; ?></td>   
+      <td class="borderOk" style="width: 14%"><?php echo xlt('Fasting');?><br><?php if($this->xmldata['pat_fasting'] == "Y") echo xlt("Yes");else if($this->xmldata['pat_fasting'] == "N") echo xlt("No"); ?></td>
+    </tr>
+    <tr>
+      <td class="borderOk" colspan="4" style="text-align: center;" align='center'><?php echo xlt('Patient Address');?><br><?php echo $this->xmldata['pat_add']; ?></td>
+      <td class="borderOk" colspan="3" style="text-align: center;background-color: #d3d3d3;" align='center'><?php echo xlt('Additional Information');?><br><?php echo $this->xmldata['add_info']; ?></td>
+    </tr>
+    <tr>
+      <td class="borderOk" colspan="2"><?php echo xlt('Date & Time Collected');?><br><?php $date_coll =  toDate($this->xmldata['date_collected']); echo $date_coll; ?></td>
+      <td class="borderOk"><?php echo xlt('Date Entered');?><br><?php $date_ord =  toDate($this->xmldata['date_entered']); echo $date_ord; ?></td>
+      <td class="borderOk"><?php echo xlt('Date & Time Reported');?><br><?php $date_rep =  toDate($this->xmldata['date_reported']); echo $date_rep; ?></td>
+      <td class="borderOk"><?php echo xlt('Physician Name');?><br><?php echo $this->xmldata['phy_name']; ?></td>
+      <td class="borderOk"><?php echo xlt('NPI');?><br><?php echo $this->xmldata['phy_npi']; ?></td>
+      <td class="borderOk"><?php echo xlt('Physician ID');?><br><?php echo $this->xmldata['phy_id']; ?></td>
+    </tr>
+  </table>  
+  <table border="1" style="width: 100%; margin-top: 0.2em"  cellpadding="0" cellspacing="0" class="local">
+    <tr>
+      <td class="borderOk" style="text-align: left;width: 100%" >
+        <table style="width: 100%"><tr>
+            <th  colspan="2" ><?php echo xlt('Tests Ordered');?></th></tr>
+          <tr>
+      <?php    $cnt =1;
+          	$existArr = array();
+              foreach($test_arr as $data){   if($data) {
+                $testdetails_arr    = explode("#!#",$data);          
+                $reflex_test = explode("#**#",$testdetails_arr[6]);
+                if(!in_array($testdetails_arr[0], $existArr)){
+                if($reflex_test[1] != 'G'){
+                  array_push($existArr, $testdetails_arr[0])
+                ?> <td   style="width: 50%"><?php              
+                  echo $testdetails_arr[0].'-'.$testdetails_arr[3];
+                  ?> </td><?php
+                  if($cnt%2==0){
+                  echo '</tr><tr>';
+                  }
+                  $cnt++;
+              } }  }  } 
+      ?>
+     
+    </tr>
+        </table></td></tr></table>  
+  
+  <table border="1" style="width: 100%;background-color: #d3d3d3;margin-top: 0.2em"   cellpadding="0" cellspacing="0" class="local">
+    <tr width="100%">      
+         <td style="width:100%;"  class="borderOk">
+           <table style="width: 100%"><tr><th class="borderOk" ><?php echo xlt('General Comments');?> </th></tr>
+               <?php if($patient_comments){ ?>
+             <tr width="100%;">
+               <td style="width:100%;"> 
+                  <div style="margin-left:30%; width:60%;"> 
+                 <?php 
+                 $pat_com = explode("*##*",$patient_comments);
+                 foreach($pat_com as $data){
+                 echo str_replace(' ','&nbsp;', $data);?><br>
+                 <?php } ?>
+                  </div>
+               </td>
+             </tr>
+               <?php }  ?>
+           </table>
+         </td>
+       </tr>
+     </table>
+  
+  <table border="1" style="width: 100%; margin-top: 0.2em"   cellpadding="0" cellspacing="0" class="clsNTEResuluts">
+    <tr>
+      <td style="width:35%;" class="borderOk"><?php echo xlt('TESTS');?></td>     
+      <td style="width:16%;" class="borderOk"><?php echo xlt('RESULTS');?></td>
+      <td style="width:19%;" class="borderOk"><?php echo xlt('FLAG');?></td>
+      <td style="width:10%;" class="borderOk"><?php echo xlt('UNITS');?></td>
+      <td style="width:15%;" class="borderOk"><?php echo xlt('REFERENCE INTERVAL');?></td>
+      <td style="width:5%;" class="borderOk"><?php echo xlt('LAB');?></td> 
+    </tr>    
+       <?php     
+           $check_test = "";
+           for($index=0; $index < count($test_arr) - 1; $index++ ) {            
+            $resultdetails_test      = $result_test_arr[$index];
+            //SEPERATES RESULT VALUES/DETAILS OF EACH SUBTEST OF ith TEST
+            $resultdetails_subtest_arr  = explode("!#@#!",$resultdetails_test);
+            $no_of_subtests	= substr_count($resultdetails_test, "!#@#!");            
+            //SEPERATES COMMENTS OF EACH SUBTEST OF ith TEST           
+            $result_test_comments    = $resultcomments_test_arr[$index];																			
+						$resultcomments_arr = explode("#!!#",$result_test_comments);                       
+            for($j=0;$j<$no_of_subtests;$j++)
+            {           
+              $resultdetails_subtest_arr[$j] = str_replace("<","&lt;",$resultdetails_subtest_arr[$j]);
+              $resultdetails_subtest_arr[$j] = str_replace(">","&gt;",$resultdetails_subtest_arr[$j]);
+              $subtest_resultdetails_arr  = explode("!@!",$resultdetails_subtest_arr[$j]);
+              list($subtest_code,$subtest_name,$result_value,$units,$range,$abn_flag,$result_status,$result_time,$providers_id,$test_name) = $subtest_resultdetails_arr;   
+              $flag = "";
+              $f = 0;
+              if($abn_flag == "L"){
+                $flag = "Below Low Normal";
+              }else if($abn_flag == "H"){
+                $flag = "Above High Normal";
+              }else if($abn_flag == "LL"){
+                $flag = "Alert Low";
+              }else if($abn_flag == "HH"){
+                $flag = "Alert High";
+              }else if($abn_flag == "<"){
+                $flag = "Panic Low";
+              }else if($abn_flag == ">"){
+                $flag = "Panic High";
+              }else if($abn_flag == "A"){
+                $flag = "Abnormal";
+              }else if($abn_flag == "AA"){
+                $flag = "Critical Abnormal";
+              }else if($abn_flag == "S"){
+                $flag = "Susceptible. For Discrete Microbiology susceptibilities only";
+              }else if($abn_flag == "R"){
+                $flag = "Resistant. For Discrete Microbiology susceptibilities only";
+              }else if($abn_flag == "I"){
+                $flag = "Intermediate. For Discrete Microbiology susceptibilities only";
+              }else if($abn_flag == "NEG"){
+                $flag = "Negative for Drug Interpretation Codes and Discrete Microbiology";
+              }else if($abn_flag == "POS"){
+                $flag = "Positive for Drug Interpretation Codes and Discrete Microbiology";
+              }else{
+                 $flag = $abn_flag;
+                 $f = 1; // set $f=1 when values other than listed on pg. 90 of the External EDI Specification  
+              }              
+              if($test_name !== $subtest_name){
+                if($test_name !== $check_test){           
+       ?>
+    <tr> <td class="borderOk" colspan="6" style="text-align: left;font-weight: bold; "><?php echo $test_name; ?></td></tr>
+              <?php }} ?>
+    <tr <?php if($f == 0){ ?> style="color:red;" <?php } ?>>    
+      <td class="borderOk"><?php echo substr($subtest_name,0,38) ; 
+      if(substr($subtest_name,38,38)){echo '<br>'.substr($subtest_name,38,38);}
+      if(substr($subtest_name,76,38)){echo '<br>'.substr($subtest_name,76,38);}
+      if(substr($subtest_name,114,38)){echo '<br>'.substr($subtest_name,114,38);}      
+      ?></td>
+      <td class="borderOk"><?php echo substr($result_value,0,17) ; 
+      if(substr($result_value,17,17)){echo '<br>'.substr($result_value,17,17);}
+      if(substr($result_value,34,17)){echo '<br>'.substr($result_value,34,17);}
+      ?></td>
+      <td class="borderOk"><?php echo substr($flag,0,20) ;
+      if(substr($flag,20,20)){echo '<br>'.substr($flag,20,20);}
+      if(substr($flag,40,20)){echo '<br>'.substr($flag,40,20);}
+      if(substr($flag,60,20)){echo '<br>'.substr($flag,60,20);}
+      if(substr($flag,80,20)){echo '<br>'.substr($flag,80,20);}      
+      ?></td>
+      <td class="borderOk" ><?php echo substr($units,0,10) ; 
+       if(substr($units,10,10)){echo '<br>'.substr($units,10,10);}
+       if(substr($units,20,10)){echo '<br>'.substr($units,20,10);}
+      ?></td>
+      <td class="borderOk"><?php 
+      $range = str_replace("<","&lt;",$range);
+      $range = str_replace(">","&gt;",$range);
+      echo substr($range,0,15) ;  
+       if(substr($range,15,15)){echo '<br>'.substr($range,15,15);}
+       if(substr($range,30,15)){echo '<br>'.substr($range,30,15);}
+      ?></td>
+      <td class="borderOk"><?php echo $providers_id; ?></td>
+    </tr>
+    <?php
+    $check_test = $test_name;
+     if($resultcomments_arr[$j]){ 
+       $res_com = explode("*##*",$resultcomments_arr[$j]);
+     ?>
+     <tr>       
+         <td class="borderOk" style="text-align: left;"  colspan="6" >      
+            <?php 
+              foreach($res_com as $res): 
+                  $res1 =str_replace("<","&lt;",$res);
+                  $res2 =str_replace(">","&gt;",$res1);
+                  echo str_replace(" ","&nbsp;",$res2);?><br><?php       
+              endforeach;
+            ?> 
+        </td>    
+     </tr>
+     <?php }}} ?>    
+  </table>  
+     <!--Specimen details -->
+    <table border="1" style="width: 100%;margin-top: 0.2em"   cellpadding="0" cellspacing="0" class="local">
+        <tr width="100%">
+            <td style="width:50%;" class="borderOk" colspan="2"><b><?php echo xlt('Specimen');?></b></td>     
+            <td style="width:50%;" class="borderOk" colspan="2"><?php echo xlt('Status');?> : 
+            <?php  if($this->xmldata['spm_status']=='F'){
+                echo xlt('Final');
+            }else if($this->xmldata['spm_status']=='P'){
+                echo xlt('Preliminary');
+            }
+               ?>
+            </td>
+        </tr>
+    <tr>
+      <td class="borderOk"><?php echo xlt('Source');?></td>     
+      <td class="borderOk"><?php echo xlt('Modifier');?></td>
+      <td class="borderOk"><?php echo xlt('Description');?></td>    
+      <td class="borderOk"><?php echo xlt('Date');?></td>
+    </tr>
+    <?php
+    $spm_detailsArr = explode('#@@#',$this->xmldata['spm_details']);
+    foreach($spm_detailsArr as $dta){
+        if($dta){
+            $spmArr = explode('!@!',$dta);
+            $sourceArr = explode('^',$spmArr[0]);
+            $ModifierArr = explode('~',$spmArr[1]);
+            $description = $spmArr[2];
+            $dateOfCol = $spmArr[3];
+            $spmModi = '';
+            foreach($ModifierArr as $modi){
+                if($modi){
+                     $ModiArr = explode('^',$modi);
+                     $spmModi .=  $ModiArr[0].'-'.$ModiArr[1].', ';
+                }
+            }
+            ?>
+    <tr>
+      <td ><?php echo $sourceArr[1] ;?></td>     
+      <td ><?php echo rtrim($spmModi,', ') ;?></td>
+      <td ><?php echo $description ;?></td>
+      <td ><?php echo toDate($dateOfCol) ;?></td>
+    </tr>
+    <?php
+        }
+    }
+    ?>
+    </table>
+   <table border="1" style="width: 100%;background-color: #d3d3d3;margin-top: 0.2em"   cellpadding="0" cellspacing="0" class="local">
+     <tr width="100%">      
+       <td style="width:100%;" class="borderOk">
+         <table style="width:100%;">
+     <?php 
+      $perFacAr = explode('#*#',$performing_facility);
+      foreach($perFacAr as $data){  
+        $data1 = explode("*#*",$data);    
+      $dir_split                = explode("Director:",$data1[0]);      
+      ?>
+      <tr width="100%"><td style="width:8%;"><?php echo $data1[1]; ?> </td><td style="width:57%;"> <?php echo $dir_split[0]; ?></td><td style="width:35%;">Dir: <?php echo $dir_split[1]." - ".$data1[2]; ?></td></tr>
+    
+      <?php } ?>
+   </table> </td></tr>  </table>
+
+
+   </page>

@@ -1,0 +1,661 @@
+<?php
+/* +-----------------------------------------------------------------------------+
+ *    OpenEMR - Open Source Electronic Medical Record
+ *    Copyright (C) 2013 Z&H Consultancy Services Private Limited <sam@zhservices.com>
+ *
+ *    This program is free software: you can redistribute it and/or modify
+ *    it under the terms of the GNU Affero General Public License as
+ *    published by the Free Software Foundation, either version 3 of the
+ *    License, or (at your option) any later version.
+ *
+ *    This program is distributed in the hope that it will be useful,
+ *    but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *    GNU Affero General Public License for more details.
+ *
+ *    You should have received a copy of the GNU Affero General Public License
+ *    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *    @author  Sanal Jacob <sanalj@zhservices.com>
+ * +------------------------------------------------------------------------------+
+ */
+?>
+<script type="text/javascript">
+    $(document).ready(function() {
+    var labOrId = "<?php echo $this->lastlaborderid; ?>";
+            if (labOrId != "" && labOrId != undefined){
+    window.location.assign("<?php echo $this->basePath(); ?>/lab/result/localrequisitionPdf?orderid=" + labOrId + "&save=yes", "Print", 'width=1000,height=800,resizable=yes,scrollbars=yes');
+    }
+
+    $(".datetimeclass").datetimepicker({
+    showSecond: true,
+            dateFormat: "yy-mm-dd",
+            timeFormat: "hh:mm:ss",
+            showOn: 'button',
+            buttonImage: '<?php echo $this->basePath(); ?>/css/icons/calendar.gif',
+            buttonImageOnly: true,
+    });
+            $(".dateclass").datepicker({
+    dateFormat: "yy-mm-dd",
+            showOn: 'button',
+            buttonImage: '<?php echo $this->basePath(); ?>/css/icons/calendar.gif',
+            buttonImageOnly: true,
+    });
+            $(".dateclass").on('change', function(){
+    var x = $(this).val();
+            if (!(x.match(/\d{4}\-\d{2}\-\d{2}/))){
+    alert("Invalid Date Format");
+            $(this).val("");
+    }
+    });
+            $(".datetimeclass").on('change', function(){
+    var x = $(this).val();
+            if (!(x.match(/(\d{4})\-(0[1-9]|1[0-2])\-(0[1-9]|1[0-9]|2[0-9]|3[0-1])\s\d{2}:\d{2}:\d{2}/))){
+    alert("Invalid Date Format");
+            $(this).val("");
+    }
+    });
+            var windowWidth = $(window).width();
+            if (windowWidth > 1100) {
+    $('#mainwindow').css({'width':'auto'});
+    } else {
+    $('#mainwindow').css({'width':1024});
+    }
+    $(".show-more a").on("click", function() {
+    var $link = $(this);
+            var $content = $link.parent().prev("div.text-content");
+            var linkText = $link.text();
+            switchClasses($content);
+            $link.text(getShowLinkText(linkText));
+            return false;
+    });
+            $(function()
+            {
+            // One instance that's reused to show info for the current person  
+            var container = $('<div id="personPopupContainer">'
+                    + '  <div id="personPopupContent"></div>'
+                    + '</div>');
+                    $('body').append(container);
+                    $('.personPopupTrigger').live('focus', function()
+            {
+            // format of 'rel' tag: pageid,personguid  
+            var reason = $(this).attr('rel');
+                    var pos = $(this).offset();
+                    var width = $(this).width();
+                    //alert(pos.left+"-"+pos);
+                    container.css({
+                    left: (pos.left - width + 40) + 'px',
+                            top: pos.top - 5 + 'px'
+                    });
+                    $('#personPopupContent').html(reason);
+                    container.css('display', 'block');
+                    $('.personPopupTrigger').live('blur', function()
+            {
+            container.css('display', 'none');
+            });
+            });
+            });
+            });
+            $(function(){
+            $.contextMenu({
+            selector: '.context-menu-res',
+                    build: function($trigger) {
+                    var options = {
+                    callback: function(key, options) {
+                    if (key == 'cancel'){
+                    var answer = prompt ("Please Enter Comment", "");
+                            var details = this.attr('id').split("-");
+                            $.post("result/cancel", {
+                            order: details[1],
+                                    seq: details[2],
+                                    proc_name: details[3],
+                                    comment: answer,
+                            },
+                                    function(data){
+                                    if (data.response == true){
+                                    alert("Test cancelled");
+                                    } else{
+                                    alert("Failed");
+                                    }
+                                    document.location.reload();
+                                    }, 'json');
+                    }
+                    },
+                            items: {}
+                    };
+                            options.items.cancel = {name: "Cancel Order"};
+                            return options;
+                    }
+            });
+                    });
+            function switchClasses($content){
+            if ($content.hasClass("short-text")){
+            $content.removeClass("short-text");
+                    $content.addClass("full-text");
+            } else {
+            $content.removeClass("full-text");
+                    $content.addClass("short-text");
+            }
+            }
+
+    function getShowLinkText(currentText){
+    var newText = '';
+            if (currentText.toUpperCase() === "SHOW MORE") {
+    newText = "Show less";
+    } else {
+    newText = "Show more";
+    }
+    return newText;
+            }
+
+    function show_hide_comments(){
+    if ($("#showhide").hasClass('hide_comm')){
+    $("#showhide").removeClass('hide_comm');
+            $("#showhide").addClass('show_comm');
+            $('tr[id^=full_comments_]').hide();
+    } else if ($("#showhide").hasClass('show_comm')){
+    $("#showhide").removeClass('show_comm');
+            $("#showhide").addClass('hide_comm');
+            $('tr[id^=full_comments_]').show();
+    }
+    }
+
+    /**
+     * Window Resizing 
+     * and avoid disign issues
+     */
+    window.onresize = function() {
+    var windowWidth = $(window).width();
+            if (windowWidth > 1100) {
+    $('#mainwindow').css({'width':auto});
+    } else {
+    $('#mainwindow').css({'width':1024});
+    }
+    }
+    function check_all(){
+    if ($(".check_all").is(':checked')) {
+    $(".check_results").attr('checked', 'checked');
+    } else {
+    $(".check_results").removeAttr('checked');
+    }
+    }
+    function printResults(){
+    var arr = new Array();
+            $(".check_results").each(function(){
+    if ($(this).is(':checked')){
+    arr.push($(this).val().substring(14));
+    }
+    });
+            $('#hidResultids').val(arr);
+            var loc = window.location;
+            var url = './resultnew/getMultipleLabResults?hidResultids=' + arr;
+            if (String(loc).match(/\/index/)){
+    url = '../resultnew/getMultipleLabResults?hidResultids=' + arr;
+    }
+    window.open(url);
+            }
+</script>
+<?php if ($this->message == 'N') { ?>
+    <div class="easyui-accordion" style="width:auto;height:550px;">
+        <div  title="<?php echo xlt('Results'); ?>" style="overflow:auto;padding:10px;">
+            <div id="dlg" class="easyui-dialog" title="<?php echo xlt('Message'); ?>" data-options="iconCls:'icon-save'" style="width:400px;height:200px;padding:10px">
+                <div style="margin: 50px; font-size: 14px;"><?php echo xlt('Please select a patient'); ?></div>
+            </div>
+        </div>
+    </div>
+<?php
+} else {
+    $match = array(
+        "/&lt;ref(?:[^\/&]|&(?!gt;))*\/&gt;/is", "/&lt;ref[^\/]*&gt;(.*?)&lt;\/ref&gt;/s",);
+    ?> 
+    <?php
+    if ($fromdiag != 'yes') {
+        ?>
+        <div class="panel-header" style="width: 98.9%;">
+            <div class="panel-title">Lab Result</div>
+            <div class="panel-tool"></div>
+        </div>
+        <?php
+    } else {
+        ?>
+        <div style="background: linear-gradient(to bottom, #EFF5FF 0px,
+             #E0ECFF 100%) repeat-x scroll 0 0 transparent;
+             padding: 4px; border:1px solid #95B8E7;">
+            <div>
+                <a href="<?php echo $this->url('diagnosis', array('action' => 'index')) . '/index'; ?>"  class="easyui-linkbutton" 
+                   iconCls="icon-single" plain="true" 
+                   title=<?php echo xlt('New Order'); ?>>
+                       <?php echo xlt('New Order'); ?>
+                </a>
+                <a href="<?php echo $this->url('lab', array('action' => 'result')); ?>" class="easyui-linkbutton menu-active" 
+                   data-options="iconCls:'icon-ok', plain:true"
+                   title=<?php echo xlt('Result'); ?>>
+                       <?php echo xlt('Result'); ?>
+                </a>
+            </div>
+        </div>
+        <input type="hidden" name="fromdiag" id="fromdiag" value="<?php echo $fromdiag; ?>" />
+        <?php
+    }
+    ?>
+
+    <div id='mainwindow' class="datagrid-wrap panel-body" title="" style="width: 99.8%;">
+        <div id="toolbar">             
+            <form id="frmsearch" method="post" novalidate>		   
+                <div style="text-align: left; padding-left:20px;">
+
+                    <fieldset style="width:27%;float:left;" >
+                        <legend><?php echo xlt('Date'); ?></legend>
+                        <span style="text-align: left; padding-right: 8px;">
+                            <?php echo xlt('From'); ?>: <input class="dateclass" style="width:80px" name='dtFrom' value="<?php echo $dtFrom; ?>" >
+                        </span>
+                        <span style="text-align: left; padding-right: 8px;">
+                            <?php echo xlt('To'); ?>: <input class="dateclass" style="width:80px" name='dtTo' value="<?php echo $dtTo; ?>" >
+                        </span>
+                        <br/>
+                        <br/>
+                        <span style="text-align: left; padding-right: 10px;">
+                            <?php echo xlt('Encounter'); ?>:
+                            <input id="searchenc" class="easyui-combobox" name="searchenc" 
+                                   data-options="valueField:'value',textField:'label',
+                                   url:'<?php echo $GLOBALS['webroot'] ?>/interface/modules/zend_modules/public/lab/result/listEncounters'" value="<?php echo $enc_select; ?>" />
+                        </span>
+                    </fieldset>
+                    <fieldset style="width:64%;float:right;height:30px;" >
+                        <legend><?php echo xlt('Status'); ?></legend>
+                        <span style="text-align: left; padding-right: 10px;">
+                            <?php echo xlt('Order'); ?>:
+                            <input id="searchStatusOrder" class="easyui-combobox" name="searchStatusOrder" 
+                                   data-options="valueField:'value',textField:'label',
+                                   url:'<?php echo $GLOBALS['webroot'] ?>/interface/modules/zend_modules/public/lab/result/getLabOptions?opt=search&optId=order&order_select=<?php echo $order_status; ?>'" />
+                        </span>
+                        <span style="text-align: left; margin-right: 10px;margin-right:50px;">
+                            <?php echo xlt('Report'); ?>:
+                            <input id="cc" class="easyui-combobox" name="searchStatusReport" 
+                                   data-options="valueField:'value',textField:'label',
+                                   url:'<?php echo $GLOBALS['webroot'] ?>/interface/modules/zend_modules/public/lab/result/getLabOptions?opt=search&optId=report&report_select=<?php echo $report_status; ?>'" />
+                        </span>
+                        <span style="text-align: left; padding-right: 10px;">
+                            <?php echo xlt('Result'); ?>:
+                            <input id="searchStatusResult" class="easyui-combobox" name="searchStatusResult" 
+                                   data-options="valueField:'value',textField:'label',
+                                   url:'<?php echo $GLOBALS['webroot'] ?>/interface/modules/zend_modules/public/lab/result/getLabOptions?opt=search&optId=result&result_select=<?php echo $result_status; ?>'" />
+                        </span>
+                    </fieldset>			
+                    <fieldset style="width:64%;float:left;height:23px;" >
+                        <legend><?php echo xlt('Other'); ?></legend>
+                        <span style="text-align: left; padding-right: 10px;">
+                            <?php echo xlt('Lab Name') . ": " . $this->formRow($form->get('lab_id')); ?>
+                        </span>
+                        <span style="text-align: left; padding-right: 10px;">
+                            <?php echo xlt('Test Name'); ?>:
+                            <input id="searchtest" class="combo" name="searchtest" autocomplete="off" value="<?php echo $searchtest; ?>"/>
+                        </span>
+                    </fieldset>
+                    <a href="#" class="easyui-linkbutton" iconCls="icon-search" plain="true" onclick="doSearch()" style="margin-top:5px;"><?php echo xlt('Search'); ?> </a>
+                    <a href="#" class="easyui-linkbutton hide_comm" id="showhide" onclick="show_hide_comments()"><?php echo xlt('Show/Hide Comments'); ?></a>
+                    &nbsp;&nbsp;&nbsp;&nbsp;
+                    <a href="#" class="easyui-linkbutton hide_comm" id="printresult" onclick="printResults()"><?php echo xlt('Print Results'); ?></a>
+                    <input type="hidden" name="hidResultids" id="hidResultids">
+                    <span style="text-align: left; padding-right: 10px;float:right;margin-top:15px;">
+                        <table cellpadding="0" cellspacing="0" border="0">
+                            <tr>
+                                <td class="icon-ok tdfont">&nbsp;&nbsp;&nbsp;&nbsp;</td><td>&nbsp;-&nbsp;</td><td class="tdfont "><?php echo xlt('Normal'); ?></td><td>&nbsp;&nbsp;</td>
+                                <td class="icon-LL tdfont">&nbsp;&nbsp;&nbsp;&nbsp;</td><td>&nbsp;-&nbsp;</td><td class="tdfont "><?php echo xlt('Very Low'); ?></td><td>&nbsp;&nbsp;</td>
+
+                                <td class="icon-A tdfont ">&nbsp;&nbsp;&nbsp;&nbsp;</td><td>&nbsp;-&nbsp;</td><td class="tdfont "><?php echo xlt('Abnormal'); ?></td><td>&nbsp;&nbsp;</td>
+                                <td class="icon-HH tdfont">&nbsp;&nbsp;&nbsp;&nbsp;</td><td>&nbsp;-&nbsp;</td><td class="tdfont "><?php echo xlt('Very High'); ?></td><td>&nbsp;&nbsp;</td>
+
+                                <td class="icon-L tdfont ">&nbsp;&nbsp;&nbsp;&nbsp;</td><td>&nbsp;-&nbsp;</td><td class="tdfont "><?php echo xlt('Low'); ?></td><td>&nbsp;&nbsp;</td>
+                                <td class="icon-H tdfont ">&nbsp;&nbsp;&nbsp;&nbsp;</td><td>&nbsp;-&nbsp;</td><td class="tdfont "><?php echo xlt('High'); ?></td>
+                            </tr>
+                        </table>
+                    </span>
+                </div>
+            </form>
+        </div>
+
+        <!-- Lab Result listing starts here------------------------------------->
+        <table id="labresult"  class="dv-table gridview2 thcolor" cellspacing="0" cellpadding="0" style="width:99%;height:auto;background:#ffffff;padding:5px;margin-top:5px;margin-bottom:15px;">
+            <thead>
+                <tr>
+                    <th><input type="checkbox" name="check_all" onclick="check_all();" class="check_all" ></th>
+                    <th colspan="4"><?php echo xlt('Order'); ?></th>     
+                    <th colspan="2"><?php echo xlt('Report'); ?></th>
+                    <th colspan="7"><?php echo xlt('Results and Recommendations'); ?></th>
+                    <th colspan="4"><?php echo xlt('Action'); ?></th>  
+                </tr>
+            </thead>
+            <tr>
+                <td class="headtd" width='4%'>&nbsp;</td>
+                <td class="headtd" width='4%'><b><?php echo xlt('PID'); ?></b></td>
+                <td class="headtd" width='5%'><b><?php echo xlt('Order Date'); ?></b></td>
+                <!--<td  class="headtd" ><b><?php echo xlt('Procedure Name'); ?></b></td>-->
+                <td class="headtd" width='3%'><b><?php echo xlt('Ord.No.'); ?></b></td>
+                <td class="headtd" ><b><?php echo xlt('Status'); ?></b></td>
+                <td class="headtd" title="<?php echo xlt('Time Collected'); ?>"><b><?php echo xlt('Time Collected'); ?></b></td>
+                <td class="headtd" width='10%'><b><?php echo xlt('Status'); ?></b></td>
+                <td class="headtd" ><b><?php echo xlt('Name'); ?></b></td>
+                <td class="headtd"  width='3%'><b><?php echo xlt('Abn'); ?></b></td>
+                <td class="headtd"  width='4%'><b><?php echo xlt('Value'); ?></b></td>
+                <td class="headtd"  width='5%'><b><?php echo xlt('Units'); ?></b></td>
+                <td class="headtd"  width='6%'><b><?php echo xlt('Range'); ?></b></td>
+                <td class="headtd"  width='4%'><b><?php echo xlt('Status'); ?></b></td>
+                <td class="headtd"  title="<?php echo xlt('Comments'); ?>"><b><?php echo xlt('Comm'); ?></b></td>
+                <td class="headtd" title="<?php echo xlt('Label'); ?>"><b><?php echo xlt('Lbl'); ?></b></td>
+                <td class="headtd" title="<?php echo xlt('Requisition'); ?>"><b><?php echo xlt('Req'); ?></b></td>
+                <td class="headtd" title="<?php echo xlt('Result'); ?>"><b><?php echo xlt('Res'); ?></b></td>                        
+                <td style="display:none;" class="headtd" width='5%'><b><?php echo xlt('order'); ?></b></td>
+            </tr>
+            <?php
+            $i = 0;
+            $main_grp = '';
+            $code_suffix = '';
+            $profile_grp = '';
+            foreach ($labresults as $labresult) :
+                $labname = strtolower($labresult['lab_name']);
+                $color = ($labresult['color'] <> "") ? $labresult['color'] : $color;
+                $totrows = $labresult['totalRows'];
+                if ($labresult[order_title] == "" && $labresult[procedure_name] == "")
+                    continue;
+                $patient_instructions = $labresult[patient_instructions];
+                if ($labresult[order_title] != '' && ($main_grp != $labresult[order_title] || $code_suffix != $labresult[code_suffix] || $labresult[order_id])) {
+                    ?>
+                    <tr style="background-color:<?php echo $color; ?>">
+                        <td style="text-align: center"><?php echo $labresult[order_id] != NULL ? '<input type="checkbox" name="checked_results" value="order_checked_' . $labresult[order_id] . '" class="check_results" >' : '&nbsp;' ?></td>
+                        <td  class="tdfont childtdF" ><?php echo $this->escapeHtml($labresult[patient_id]); ?>
+                                <?php if ($labresult[patient_id] && $patient_instructions) { ?>
+                                <a href="javascript:void(0)" class="personPopupTrigger" rel="<?php echo str_replace("\n", "", $patient_instructions); ?>"><img src="<?php echo $this->basePath() ?>/css/icons/comments.png" title="<?php echo xlt('Internal Comments'); ?>" >
+                                    <?php
+                                }
+                                ?>
+                                                                                                                                                        </td>	
+                                <td  class="tdfont childtd"><?php echo $this->escapeHtml($labresult[date_ordered]); ?></td>
+                                <td  class="tdfont childtd"><?php echo $this->escapeHtml($labresult[order_id]); ?></td>
+                                <td  class="tdfont childtd" nowrap=nowrap><?php echo $this->escapeHtml($labresult[order_status]); ?></td>
+                                <td  class="tdfont childtd" title="<?php echo $this->escapeHtml($labresult[date_collected]); ?>" nowrap=nowrap>
+            <?php echo $this->escapeHtml($labresult[date_collected]); ?>
+                                </td>
+                                <td class="tdfont childtd" ><?php echo $this->escapeHtml($labresult[report_title]); ?></td>
+                                <td  class="tdfont headchildtd" colspan="10" title="<?php echo $this->escapeHtml($labresult[order_title]); ?>" nowrap=nowrap><b><?php echo $this->escapeHtml($labresult[order_title]); ?></b></td>                                
+            <?php if (($labresult['editor'] == 1) AND ($labresult['editor'] != 0)) {
+                $check = 1; 
+                } elseif (($labresult['editor'] == 0) AND ($labresult['editor'] != 1)) { 
+                } elseif ((($labresult['editor'] == 0) OR ($labresult['editor'] == 1)) AND $check != 1) {  } ?>
+                                <td style="display:none;border-style:dotted;border-width:0 1px 1px 0;border-color:#c0c0c0"   width='10%'>  <?php echo $this->escapeHtml($labresult[order_id]); ?> </td>
+                    </tr>
+                    <?php
+                }
+                if ($labresult[profile_title] && $profile_grp != $labresult[profile_title]) {
+                    ?>
+                    <tr style="background-color:<?php echo $color; ?>">
+                        <td  class="tdfont childtdF">&nbsp;</td>	
+                        <td  class="tdfont childtd">&nbsp;</td>
+                        <td  class="tdfont childtd">&nbsp;</td>
+                        <td  class="tdfont childtd" nowrap=nowrap>&nbsp;</td>
+                        <td  class="tdfont childtd" nowrap=nowrap>&nbsp;</td>
+                        <td class="tdfont childtd" >&nbsp;</td>
+                        <td  class="tdfont subchildtd" colspan="10" nowrap=nowrap>&nbsp;&nbsp;&nbsp;<b><?php echo $this->escapeHtml($labresult[profile_title]); ?></b></td>                        
+            <?php if (($labresult['editor'] == 1) AND ($labresult['editor'] != 0)) {
+                $check = 1; 
+                } elseif (($labresult['editor'] == 0) AND ($labresult['editor'] != 1)) { 
+                    } elseif ((($labresult['editor'] == 0) OR ($labresult['editor'] == 1)) AND $check != 1) {
+                    } ?>
+                        <td style="display:none;border-style:dotted;border-width:0 1px 1px 0;border-color:#c0c0c0"   width='10%'>  <?php echo $this->escapeHtml($labresult[order_id]); ?> </td>
+                    </tr>
+                    <?php
+                }
+                if ($labresult[result] == 'DNR') {
+                    $profile_grp = $labresult[profile_title];
+                    $main_grp = $labresult[order_title];
+                    $code_suffix = $labresult[code_suffix];
+                    continue;
+                }
+                ?>
+                <tr <?php echo $labresult[result_status] ? '' : 'class="context-menu-res"'; ?> id="order-<?php echo $labresult[procedure_order_id] . "-" . $labresult[procedure_order_seq] . "-" . $labresult[procedure_name]; ?>" style="background-color:<?php echo $color; ?>">
+                    <td style="text-align: center"><?php echo $labresult[order_id] != NULL ? '<input type="checkbox" name="checked_results" value="order_checked_' . $labresult[order_id] . '" class="check_results" >' : '&nbsp;' ?></td>
+                    <td  class="tdfont childtdF">&nbsp;
+                        <?php
+                        if ($labresult[order_title] == NULL) {
+                            echo $this->escapeHtml($labresult[patient_id]);
+                            if ($labresult[patient_id] && $patient_instructions) {
+                                ?>
+                                <a href="#" class="personPopupTrigger" rel="<?php echo $this->escapeHtml($patient_instructions); ?>"><img src="<?php echo $this->basePath() ?>/css/icons/comments.png" title="<?php echo xlt('Internal Comments'); ?>" >
+                                    <?php
+                                }
+                            } else
+                                echo '&nbsp;';
+                            ?>
+                                                                                                                                 </td>	
+                            <td  class="tdfont childtd"><?php echo $labresult[order_title] == NULL ? $this->escapeHtml($labresult[date_ordered]) : '&nbsp;'; ?></td>
+                            <td  class="tdfont childtd"><?php echo $labresult[order_title] == NULL ? $this->escapeHtml($labresult[order_id]) : '&nbsp;'; ?></td>
+                            <td  class="tdfont childtd" nowrap=nowrap><?php echo $labresult[order_title] == NULL ? $this->escapeHtml($labresult[order_status]) : '&nbsp;'; ?></td>
+                            <td  class="tdfont childtd" nowrap=nowrap><?php echo $labresult[order_title] == NULL ? $this->escapeHtml($labresult[date_collected]) : '&nbsp;'; ?></td>
+                            <td class="tdfont childtd" ><?php echo $labresult[order_title] == NULL ? $this->escapeHtml($labresult[report_title]) : '&nbsp;'; ?></td>
+                            <td  class="tdfont childtd" nowrap=nowrap>
+                                <?php if ($labresult[order_title] == NULL) {
+                                    ?>
+                                    <b><?php echo $this->escapeHtml($labresult[result_text]); ?></b>
+                                    <?php
+                                } else {
+                                    ?>
+                                    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<?php echo $this->escapeHtml($labresult[result_text]); ?>
+                                <?php
+                            }
+                            ?>
+                            </td>
+                            <?php
+                            $icclas = $title = '';
+                            if ($labresult[abnormal] == "H" || $labresult[abnormal] == "high") {
+                                $icclas = 'icon-H';
+                                $title = xlt('HIGH');
+                            } elseif ($labresult[abnormal] == "HH") {
+                                $icclas = 'icon-HH';
+                                $title = xlt('VERY HIGH');
+                            } elseif ($labresult[abnormal] == "L" || $labresult[abnormal] == "low") {
+                                $icclas = 'icon-L';
+                                $title = xlt('LOW');
+                            } elseif ($labresult[abnormal] == "LL") {
+                                $icclas = 'icon-LL';
+                                $title = xlt('VERY LOW');
+                            } elseif ($labresult[abnormal] == "N" || $labresult[abnormal] == "no") {
+                                $icclas = 'icon-ok';
+                                $title = xlt('NORMAL');
+                            } elseif ($labresult[abnormal] == "A" || $labresult[abnormal] == "yes") {
+                                $icclas = 'icon-A';
+                                $title = xlt('ABNORMAL');
+                            } else
+                                $icon = $labresult[abnormal];
+                            $res_units = \Application\Plugin\CommonPlugin::getDropdownValAsText("proc_unit", $labresult[units]);
+                            ?>   
+                            <td  class="tdfont childtd <?php echo $icclas; ?>" title="<?php echo $title; ?>"><?php echo $icon; ?></td>
+                            <td  class="tdfont childtd" title="<?php echo $labresult[result]; ?>"><?php echo $labresult[result]; ?></td>
+                            <td  class="tdfont childtd" title="<?php echo $this->escapeHtml($labresult[units]); ?>"><?php echo $this->escapeHtml($labresult[units]); ?></td>
+                            <td  class="tdfont childtd" title="<?php echo $this->escapeHtml($labresult[range]); ?>"><?php echo strip_tags($labresult[range]); ?> </td>
+                            <td  class="tdfont childtd" >
+                            <?php
+                            $resStat = '';
+                            if ($labresult[result_status] == 'F')
+                                $resStat = xlt('Final');
+                            elseif ($labresult[result_status] == 'P')
+                                $resStat = xlt('Preliminary');
+                            elseif ($labresult[result_status] == 'I')
+                                $resStat = xlt('Pending');
+                            elseif ($labresult[result_status] == 'C')
+                                $resStat = xlt('Correction');
+                            elseif ($labresult[result_status] == 'X')
+                                $resStat = xlt('Cancelled');
+                            else
+                                $resStat = ucwords($labresult[result_status]);
+                            if (!$resStat) {
+                                $resStat = "Pending";
+                            }
+                            echo $resStat;
+                            ?>
+                            </td>
+                            <!--<td  class="tdfont childtd" style="padding-left:13px;" ><a href="#" onclick="editComments(<?php echo $this->escapeHtml($labresult[procedure_report_id]); ?>)"><img src=<?php echo $this->basePath() ?>/css/icons/comments.png title=<?php echo xlt('Comments'); ?> ></td>-->
+                            <td  class="tdfont childtd <?php echo trim($labresult[comments]) ? 'comments_col' : ''; ?>" align="center" >
+                            <?php
+                            $comments = '';
+                            if (trim($labresult[comments])) {
+                                $comments = $labresult[comments];
+                                ?>
+                                                        <a id="<?php echo $i; ?>" name="<?php echo $i; ?>"  onclick="showcomments('<?php echo $i; ?>')">
+                                                            <img src=<?php echo $this->basePath() ?>/css/icons/comments.png title=<?php echo xlt('Comments'); ?> >
+                                                        </a>
+                                <?php
+                            }
+                            ?>
+                            </td>
+                            <!-- If internal lab -->
+                                <?php if (intval($labresult['mirth_lab_id']) == 0) : ?>
+                                <td  class="tdfont childtd" > <a href="#" onclick="getLabelDownload(<?php echo $this->escapeHtml($labresult[order_id1]); ?>)"> <img  src=<?php echo $this->basePath() . '/css/icons/label_download.png'; ?> ></a> </td>
+                                <td class="tdfont childtd" > <a href="<?php echo $this->url('result', array('action' => 'localrequisitionPdf')) . '/' . $labresult[order_id1]; ?>" target="_blank" > <img src=<?php echo $this->basePath() . '/css/icons/request.png'; ?> > </a></td>
+                                <?php if ($labresult['file_exist'] == 1): ?>
+                                    <td  class="tdfont childtd" > <a href="#" onclick="getResult(<?php echo $this->escapeHtml($labresult[order_id1]); ?>)"> <img <?php if ($labresult['editor'] == 0 && $labresult['file_exist'] != 1) { ?> style="display:none;" <?php } ?>   src=<?php echo $this->basePath() . '/css/icons/pdf_icon.png'; ?> > </a></td>
+                                <?php else: ?>
+                                    <td>&nbsp</td>
+                                <?php endif; ?>                                               
+                            <?php endif; ?>
+                            <!-- End  If internal lab --> 
+
+                            <!-- If External lab -->
+                                <?php if (intval($labresult['mirth_lab_id']) > 0) : ?>
+                                <td  class="tdfont childtd" > <a href="#" onclick="getLabelDownload(<?php echo $this->escapeHtml($labresult[order_id1]); ?>)"> <img  src=<?php echo $this->basePath() . '/css/icons/label_download.png'; ?> ></a> </td>
+
+                                <!-- #### requisition starts ###  -->
+                                <!-- If Dianon or labcorp lab -->
+                                <?php if ($labname == "labcorp" || $labname == 'dianon'): ?>
+                                    <td class="tdfont childtd" > <a href="<?php echo $this->url('result', array('action' => 'requisitionPdf')) . '/' . $labresult[order_id1]; ?>" target="_blank" > <img src=<?php echo $this->basePath() . '/css/icons/request.png'; ?> > </a></td>                                              
+                                <?php elseif ($labname == "singulex"): ?> <!-- If singulex -->
+                                    <td class="tdfont childtd" > <a href="<?php echo $this->url('result', array('action' => 'localrequisitionPdf')) . '/' . $labresult[order_id1]; ?>" target="_blank" > <img src=<?php echo $this->basePath() . '/css/icons/request.png'; ?> > </a></td>
+                                <?php else: ?> <!-- If other external labs -->
+                                    <td  class="tdfont childtd" > <a href="#" onclick="getRequisition(<?php echo $this->escapeHtml($labresult[order_id1]); ?>)"> <img  src=<?php echo $this->basePath() . '/css/icons/request.png'; ?> > </a></td>
+                                <?php endif; ?>
+                                <!-- #### requisition ends ###  -->
+
+                                <!-- #### result starts ###  -->
+                                <?php if ($labname == "singulex" && $labresult['order_status'] == "Completed"): ?> <!-- If singulex -->
+                                    <td class="tdfont childtd" > <a href="<?php echo $this->url('result', array('action' => 'singulexresultPdf')) . '/' . $labresult[order_id1]; ?>" target="_blank" > <img src=<?php echo $this->basePath() . '/css/icons/pdf_icon.png'; ?> > </a></td>
+                                <?php else: ?> <!-- If other external labs -->
+                                    <td  class="tdfont childtd" > <a href="#" onclick="getResult(<?php echo $this->escapeHtml($labresult[order_id1]); ?>)"> <img  src=<?php echo $this->basePath() . '/css/icons/pdf_icon.png'; ?> > </a></td>    
+                                <?php endif; ?>
+                                <!-- #### result ends ###  -->
+                            <?php endif; ?>
+                            <!-- End  If External lab -->                                                                                                                                      
+                            <td style="display:none;border-style:dotted;border-width:0 1px 1px 0;border-color:#c0c0c0"   width='10%'>  <?php echo $this->escapeHtml($labresult[order_id]); ?> </td>
+                            </tr>
+                    <?php
+                    if (trim($labresult[comments])) {
+                        ?>
+                                <tr id="full_comments_<?php echo $i; ?>" >
+                                    <td colspan="6" class="comments_blank_bg" >
+                                    </td>
+                                    <td colspan="7" class="comments_bg comments_td" >
+                                        <div class="text-container">
+                                            <div class="text-content short-text">                                        
+                        <?php
+                        $res_com = explode("*##*", $labresult[comments]);
+                        if (!empty($res_com)) {
+                            foreach ($res_com as $res):
+                                echo "<pre>" . str_replace("\\r\\n", "<br>", $res) . "</pre>";
+                            endforeach;
+                        }else {
+                            echo "<pre>" . str_replace("\\r\\n", "<br>", $labresult[comments]) . "</pre>";
+                        }
+                        ?>
+                                            </div>
+                                                <?php if (substr_count($labresult[comments], "\\r\\n") > 7 || count($res_com) > 7) { ?>
+                                                <div class="show-more">
+                                                    <a href="#">Show more</a>
+                                                </div>
+                        <?php } ?>
+                                        </div>
+                                    </td>
+                                    <td colspan="4" class="comments_blank_bg" >
+                                    </td>
+                                </tr>
+                        <?php
+                    }
+                    if ($labresult[result_facility]) {
+                        $facilitys = explode("#*#", $labresult[result_facility]);
+                        if (!empty($facilitys)) {
+                            foreach ($facilitys as $res):
+                                $facility = explode("*#*", $res);
+                                if ($facility[1] == intval($labresult[providers_id])) {
+                                    $perform_lab = $facility[0];
+                                    break;
+                                }
+                            endforeach;
+                        } else {
+                            $perform_lab = $labresult[result_facility];
+                        }
+                        ?>
+                                <tr>
+                                    <td style="background-color:<?php echo $color; ?>">&nbsp;</td>
+                                    <td colspan="16" class="tdfont childtd" style="background-color:<?php echo $color; ?>">
+                                        PERFORMING LABORATORY : <?php echo $perform_lab; ?>
+                                    </td>
+                                </tr>
+                        <?php
+                    }
+                    $i++;
+                    $profile_grp = $labresult[profile_title];
+                    $main_grp = $labresult[order_title];
+                    $code_suffix = $labresult[code_suffix];
+                endforeach;
+        ?>
+
+        </table>
+        <!-- Result listing ends  here------------------------------------->
+
+        <?php
+        $totPages = ceil($totrows / 40);
+        if (!isset($_GET['pageno'])) {
+            $_GET['pageno'] = 1;
+        }
+        ?>
+
+        <div align="justify" style="float:left;border:1px solid #ddd;padding-left:6px;padding-top:4px;padding-bottom:3px;background-color: #F4F4F4;width:99.1%;">
+
+            <div style="float:left;margin-top: 3px;">
+                <a style="margin-top:5px;cursor:hand;cursor:pointer" onclick="movefirstlast(1)"><img  src=<?php echo $this->basePath() . '/css/icons/movfirst.png'; ?> ></a> 
+            </div>
+            <div style="float:left;margin-top: 3px;">
+                <a style="margin-top:5px;cursor:hand;cursor:pointer"  <?php if ($_GET['pageno'] AND ($_GET['pageno'] > 1)) { ?> onclick="movenext1(<?php echo $_GET['pageno'] - 1 ?>) <?php } ?>"><img  src=<?php echo $this->basePath() . '/css/icons/movprev.png'; ?> ></a> 
+            </div>
+            <div style="float:left;">
+                <label style="margin-left:20px;" for="pageno">Page</label>
+                <select name="pageno" id="pageno" style="width:40px;" onchange="movenext()" >
+                <?php
+                for ($i = 1; $i <= $totPages; $i++) {
+                    $sel = "";
+                    if ($_GET['pageno'] == $i) {
+                        $sel = "selected=\"selected\"";
+                    }
+                    ?>
+
+                        <option value="<?php echo $i ?>" <?php echo $sel; ?>  > <?php echo $i ?> </option>
+                    <?php } ?>
+
+                </select>
+                    <?php echo "of " . $totPages; ?>
+            </div>
+            <div style="float:left;margin-top: 3px;">
+                <a style="margin-left:20px; margin-top:5px;cursor:hand;cursor:pointer" <?php if ($_GET['pageno'] AND ($_GET['pageno'] < $totPages)) { ?> onclick="movenext1(<?php echo $_GET['pageno'] + 1 ?>) <?php } ?>"><img  src=<?php echo $this->basePath() . '/css/icons/movenext.png'; ?> ></a> 
+            </div>
+            <div style="float:left;margin-top: 3px;">
+                <a style="margin-top:5px;cursor:hand;cursor:pointer" onclick="movefirstlast(<?php echo $totPages ?>)"><img   src=<?php echo $this->basePath() . '/css/icons/movelast.png'; ?> ></a> 
+            </div>
+        </div>
+    </div>
+
+    <div id="dlg" class="easyui-dialog" style="top:150;width:550px;padding:10px 20px"  
+         closed="true" buttons="#dlg-buttons">  
+        <div class="ftitle" id='titleShow'></div>  
+        <div id="commentsF"></div>
+    </div>
+    <?php
+}
+echo $this->headScript()->prependFile($this->basePath() . '/js/lib/jquery.ui.position.js')
+        ->prependFile($this->basePath() . '/js/lib/jquery.contextMenu.js')
+?>

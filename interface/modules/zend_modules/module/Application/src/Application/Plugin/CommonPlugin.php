@@ -201,4 +201,157 @@ class CommonPlugin extends AbstractPlugin
       $return = xl_list_label($row['title']);
       return $return;
   }
+  /**
+   * Procedure Providers for Lab
+   * function getProviders
+   * To fetch all Providers
+   */
+  
+  public function getProviders()
+  {
+    global $encounter;
+    global $pid;
+    $sqlSelctProvider     = "SELECT * FROM form_encounter WHERE encounter=? AND pid=?";
+    $result               = $this->application->zQuery($sqlSelctProvider, array($encounter, $pid));    
+    foreach($result as $row ){
+      $provider = $row['encounter_provideID'];
+    } 
+    $res =  $this->application->zQuery("SELECT id, fname, lname, specialty FROM users " .
+      "WHERE active = 1 AND ( info IS NULL OR info NOT LIKE '%Inactive%' ) " .
+      "AND authorized = 1 " .
+      "ORDER BY lname, fname");
+
+    $rows[0] = array (
+      'value' => '',
+      'label' => $this->listenerObject->z_xlt('Unassigned'),
+      'selected' => TRUE,
+      'disabled' => FALSE
+    );
+    $i = 1;
+
+     foreach($res as $row) {
+      if ($row['id'] == $provider) {
+        $select =  TRUE;
+      } else {
+        $select = FALSE;
+      }
+      $rows[$i] = array (
+        'value' => $row['id'],
+        'label' => $row['fname']." ".$row['lname'],
+        'selected' => $select,
+      );
+      $i++;
+    }
+    return $rows;
+  }
+  /**
+    * selected menu item at the top of the array
+    * @param array $array
+    * @param int $key selected menu id
+    * @return array $array
+  */
+  
+   public function getLabs($type='',$opt='')
+   {
+     
+       $res = $this->application->zQuery("SELECT ppid,name,remote_host,login,password,mirth_lab_id FROM procedure_providers ORDER BY name, ppid"); 
+
+		$i = 0;
+    if ($opt == 'search') {
+	    $rows[$i] = array (
+        'value' => 'all',
+        'label' => $this->listenerObject->z_xlt('All'),
+        'selected' => TRUE,
+		  );
+	    $i++;
+    }
+
+                  foreach($res as $row) {
+				$value = '';
+				if ($type == 'y') {
+			if ($row['remote_host'] != '' && $row['login'] != '' && $row['password'] != '') {
+				$value = $row['ppid'] . '|' . 1 . '|' . $row['mirth_lab_id']; // 0 - Local Lab and 1 - External Lab
+			} else {
+				$value = $row['ppid'] . '|' . 0 . '|' . $row['mirth_lab_id'];
+			}
+				} else {
+			$value = $row['ppid']. '|' . $row['mirth_lab_id'];
+				}
+				if ($row['name'] == 'Quest') {
+					//$select =  TRUE;
+				} else {
+					$select = FALSE;
+				}
+				$rows[$i] = array (
+			'value' => $value,
+			'label' => $row['name'],
+			'selected' => $select,
+				);
+				$i++;
+		}
+		return $rows;
+   }
+   /**
+   * Procedure Providers for Lab
+   * function getProcedureProviders
+   * List all Procedure Providers
+   */
+  public function getProcedureProviders()
+  {
+    $arr = array();
+    $sql = "SELECT pp.*
+      FROM procedure_providers AS pp 
+      ORDER BY pp.name";
+    $result = $this->application->zQuery($sql);
+    $i = 0;
+    //while ($row = sqlFetchArray($result)) {
+      foreach($result as $row) {
+      $arr[$i]['ppid']					= $row['ppid'];
+      $arr[$i]['name'] 					= htmlspecialchars($row['name'],ENT_QUOTES);
+      $arr[$i]['npi'] 					= htmlspecialchars($row['npi'],ENT_QUOTES);
+      $arr[$i]['protocol'] 			= htmlspecialchars($row['protocol'],ENT_QUOTES);
+      $arr[$i]['DorP'] 					= htmlspecialchars($row['DorP'],ENT_QUOTES);
+      $arr[$i]['send_app_id'] 	= htmlspecialchars($row['send_app_id'],ENT_QUOTES);
+      $arr[$i]['send_fac_id'] 	= htmlspecialchars($row['send_fac_id'],ENT_QUOTES);
+      $arr[$i]['recv_app_id'] 	= htmlspecialchars($row['recv_app_id'],ENT_QUOTES);
+      $arr[$i]['recv_fac_id'] 	= htmlspecialchars($row['recv_fac_id'],ENT_QUOTES);
+      $arr[$i]['remote_host'] 	= htmlspecialchars($row['remote_host'],ENT_QUOTES);
+      $arr[$i]['login'] 				= htmlspecialchars($row['login'],ENT_QUOTES);
+      $arr[$i]['password'] 			= htmlspecialchars($row['password'],ENT_QUOTES);
+      $arr[$i]['orders_path'] 	= htmlspecialchars($row['orders_path'],ENT_QUOTES);
+      $arr[$i]['results_path'] 	= htmlspecialchars($row['results_path'],ENT_QUOTES);
+      $arr[$i]['notes'] 				= htmlspecialchars($row['notes'],ENT_QUOTES);
+      if ($row['remote_host'] != '' && $row['login'] != '' && $row['password'] != '') {
+          $arr[$i]['labtype']	= 'External';
+      } else {
+          $arr[$i]['labtype']	= 'Local';
+      }
+      $i++;
+		}
+		return $arr;
+    } 
+    /**
+     * getDropdownValAsText
+     * @param type $list_id
+     * @param type $option_id
+     * @return type
+     */
+    public function getDropdownValAsText($list_id,$option_id)
+  {
+    $this->application    = new ApplicationTable();
+    $result =  $this->application->zQuery("SELECT title FROM list_options WHERE list_id = ? AND option_id = ?",array($list_id,$option_id )); 
+    $res    =  $result->current();
+    return $res['title'];
+  }
+  /**
+   * getClientCredentialsLab
+   * @param type $labname
+   * @return type
+   */
+  public function getClientCredentialsLab($labname){
+    $this->application = new ApplicationTable();
+    $result = $this->application->zQuery("SELECT * FROM procedure_providers WHERE mirth_lab_name = ?",array($labname)); 
+    $res    = $result->current();
+    return $res;
+  }
 }

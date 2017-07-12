@@ -1,0 +1,11 @@
+/**
+ * Lab Multiple Order Screen
+ */
+
+table.gridtable td {
+    border-width: 1px 1px 1px 1px;
+    border-style: dotted;
+    border-color: #ccc;
+    margin: 0;
+    padding: 0;
+}

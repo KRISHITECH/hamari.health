@@ -1,0 +1,123 @@
+<?php
+/* +-----------------------------------------------------------------------------+
+ *    OpenEMR - Open Source Electronic Medical Record
+ *    Copyright (C) 2013 Z&H Consultancy Services Private Limited <sam@zhservices.com>
+ *
+ *    This program is free software: you can redistribute it and/or modify
+ *    it under the terms of the GNU Affero General Public License as
+ *    published by the Free Software Foundation, either version 3 of the
+ *    License, or (at your option) any later version.
+ *
+ *    This program is distributed in the hope that it will be useful,
+ *    but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *    GNU Affero General Public License for more details.
+ *
+ *    You should have received a copy of the GNU Affero General Public License
+ *    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *    @author  Sanal Jacob <sanalj@zhservices.com>
+ * +------------------------------------------------------------------------------+
+ */
+?>
+<script type="text/javascript">
+    $(document).ready(function() {
+        $('#patient_instructions').bubbletip("#patient_instructions_tips", {
+            deltaDirection: 'right',
+            bindShow: 'focus',
+            bindHide: 'blur'
+        });
+        $('#internal_comments').bubbletip("#internal_comments_tips", {
+            deltaDirection: 'right',
+            bindShow: 'focus',
+            bindHide: 'blur'
+        });
+    });
+</script>
+<div style="margin:10px 0;"></div>
+<div class="easyui-panel" title="<?php echo xlt('Procedure Order'); ?>" style="width:600px;">
+    <div style="padding:10px 0 10px 60px">
+        <?php
+        $form = $this->form;
+        $form->setAttribute('action', $this->url('lab', array('action' => 'index')));
+        $form->prepare();
+
+        echo $this->form()->openTag($form);
+        echo $this->formRow($form->get('patient_id'));
+        echo $this->formRow($form->get('encounter_id'));
+        echo $this->formRow($form->get('procedurecount'));
+        ?>
+        <table id="ordertable">
+            <tr>
+                <td><?php echo xlt('Ordering Provider'); ?>:</td>
+                <td><?php echo $this->formRow($form->get('provider')); ?></td>
+            </tr>
+            <tr>
+                <td><?php echo xlt('Sending To'); ?>:</td>
+                <td><?php echo $this->formRow($form->get('lab_id')); ?></td>
+            </tr>
+            <tr>
+                <td><?php echo xlt('Order Date'); ?>:</td>
+                <td><?php echo $this->formRow($form->get('orderdate')); ?></td>
+            </tr>
+            <tr id="internaltime" style="display:none">
+                <td><?php echo xlt('Internal Time Collected'); ?>:</td>
+                <td><?php echo $this->formRow($form->get('timecollected')); ?></td>
+            </tr>
+            <tr>
+                <td><?php echo xlt('Specimen Collected'); ?>:</td>
+                <td><?php echo $this->formRadio($form->get('specimencollected'), 'prepend'); ?></td>
+            </tr>
+            <tr>
+                <td><?php echo xlt('Priority'); ?>:</td>
+                <td><?php echo $this->formRow($form->get('priority')); ?></td>
+            </tr>
+            <tr>
+                <td><?php echo xlt('Status'); ?>:</td>
+                <td><?php echo $this->formRow($form->get('status')); ?></td>
+            </tr>
+            <tr>
+                <td><?php echo xlt('Bill To'); ?>:</td>
+                <td><?php echo $this->formRow($form->get('billto')); ?></td>
+            </tr>
+            <tr>
+                <td><?php echo xlt('Internal Comments'); ?>:</td>
+                <td><?php echo $this->formRow($form->get('internal_comments')); ?></td>
+            </tr>
+            <tr>
+                <td><?php echo xlt('Patient Instructions'); ?>:</td>
+                <td><?php echo $this->formRow($form->get('patient_instructions')); ?></td>
+            </tr>
+            <tr id="diagnosestemplate_1">
+                <td><?php echo xlt('Diagnosis'); ?>:</td>
+                <td><?php echo $this->formRow($form->get('diagnoses[]')); ?></td>
+            </tr>
+            <tr id="proceduretemplate_1">
+                <td><?php echo xlt('Procedure'); ?>:</td>
+                <td><?php echo $this->formRow($form->get('procedures[]')); ?>
+                    <div class="autocomplete-suggestions" id="prodiv_1" style="display:none;z-index:99999;position:absolute;min-width:150px"></div>
+                    <?php echo $this->formRow($form->get('procedure_code[]')); ?>
+                    <?php echo $this->formRow($form->get('procedure_suffix[]')); ?>
+                </td>
+            </tr>
+            <tr id="AOEtemplate_1"  style="display:none">
+                <td>&nbsp;</td>
+                <td id="AOE_1"></td>
+            </tr>
+
+        </table>
+        <div id="patient_instructions_tips" style="display:none">
+            <?php echo xlt("This Comment Reflect in Result"); ?>
+        </div>
+        <div id="internal_comments_tips" style="display:none">
+            <?php echo xlt("This Comment Will Go to Lab Only"); ?>
+        </div>
+        <div style="text-align:center;padding:5px">
+            <?php echo $this->formRow($form->get('addprocedure')); ?>
+            <input type="submit" name="submit" class="easyui-linkbutton" value="Save">
+            <input type="reset" name="clear" value="Clear">
+        </div>
+    </div>
+</div>
+<?php
+echo $this->form()->closeTag();
+?>

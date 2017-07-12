@@ -1,0 +1,199 @@
+<?php
+/* +-----------------------------------------------------------------------------+
+ *    OpenEMR - Open Source Electronic Medical Record
+ *    Copyright (C) 2013 Z&H Consultancy Services Private Limited <sam@zhservices.com>
+ *
+ *    This program is free software: you can redistribute it and/or modify
+ *    it under the terms of the GNU Affero General Public License as
+ *    published by the Free Software Foundation, either version 3 of the
+ *    License, or (at your option) any later version.
+ *
+ *    This program is distributed in the hope that it will be useful,
+ *    but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *    GNU Affero General Public License for more details.
+ *
+ *    You should have received a copy of the GNU Affero General Public License
+ *    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *    @author  Sanal Jacob <sanalj@zhservices.com>
+ * +------------------------------------------------------------------------------+
+ */
+
+echo $this->headScript()->prependFile($this->basePath() . '/js/lab/procProviders.js');
+?>
+
+<!-- Provider (Add or Edit) -->
+<div style="padding-top:10px"></div>
+<table id="dgProvider" title="<?php echo xlt('Providers'); ?>" class="easyui-datagrid" style="width:800px;height:300px"  
+       url="./lab/getProcedureProviders"
+       idField="ppid" 
+       toolbar="#toolbarProvider"  
+       rownumbers="true" fitColumns="true" singleSelect="true">  
+    <thead>  
+        <tr>  
+            <th field="name" width="50"><?php echo xlt('Name'); ?></th>	
+            <th field="npi" width="50"><?php echo xlt('NPI'); ?></th>  
+            <th field="protocol" width="50"><?php echo xlt('Protocol'); ?></th>  
+            <th field="labtype" width="50"><?php echo xlt('Type'); ?></th>  
+        </tr>  
+    </thead>  
+</table>  
+<div id="toolbarProvider">  
+    <span>
+        <a href="javascript:void(0)" class="easyui-linkbutton"
+           iconCls="icon-add" plain="true" onclick="newProvider()">
+               <?php echo xlt('New'); ?>
+        </a>
+    </span>
+    <span id='editPProvider' style="display:none; float:left;">
+        <a href="javascript:void(0)" class="easyui-linkbutton"
+           iconCls="icon-edit" plain="true" onclick="editProvider()">
+               <?php echo xlt('Edit'); ?>
+        </a>
+    </span>
+    <span id='destroyPProvider' style="display:none; float:left;">
+        <a href="javascript:void(0)" class="easyui-linkbutton"
+           iconCls="icon-remove" plain="true" onclick="destroyProvider()">
+               <?php echo xlt('Remove'); ?>
+        </a>
+    </span>
+</div>  
+
+<div id="dlg" class="easyui-dialog" style="width:700px;height:480px;padding:10px 20px"  
+     closed="true" buttons="#dlg-buttons-providers">  
+    <div class="ftitle"><?php echo xlt('Procedure Providers'); ?></div>  
+    <form id="fmProcedureProvider" method="post" novalidate>  
+        <input type="hidden" id="ppid" name="ppid" value="" />
+        <table border='0'>
+            <tr>
+                <td class="fitem"><?php echo xlt('Name'); ?>:</td>  
+                <td class="fitem"><input name="name" class="easyui-validatebox combo validatebox-text" style="width:100%" required="true"></td>
+            </tr>
+            <tr class="fitem">
+                <td><?php echo xlt('NPI'); ?>:</td>  
+                <td><input type='text' name="npi" value='' class="easyui-validatebox combo validatebox-text" style="width:100%" /></td>
+            </tr>
+            <tr class="fitem">
+                <td><?php echo xlt('Sender IDs'); ?>:</td>  
+                <td><?php echo xlt('Application'); ?>:
+                    <input type='text' name="send_app_id" id="send_app_id" value='' class="easyui-validatebox combo validatebox-text"  />
+                    <?php echo xlt('Facility'); ?>:
+                    <input type='text' name="send_fac_id" id="send_fac_id" value='' class="easyui-validatebox combo validatebox-text" /></td>
+            </tr>
+            <tr class="fitem">
+                <td><?php echo xlt('Receiver IDs'); ?>:</td>  
+                <td><?php echo xlt('Application'); ?>:
+                    <input type='text' name="recv_app_id" id="recv_app_id" value='' class="easyui-validatebox combo validatebox-text" />
+                    <?php echo xlt('Facility'); ?>:
+                    <input type='text' name="recv_fac_id" id="recv_fac_id" value='' class="easyui-validatebox combo validatebox-text" /></td>
+            </tr>
+            <tr>
+                <td class="fitem"><?php echo xlt('Usage'); ?>:</td>  
+                <td class="fitem">
+                    <?php
+                    $usage = array(
+                        'D' => xlt('Debugging'),
+                        'P' => xlt('Production'),
+                    );
+                    ?>
+                    <input id="DorP" name="DorP" editable="false"  class="easyui-combobox" data-options="
+                           valueField: 'value',
+                           textField: 'label',
+                           data: [
+                           <?php foreach ($usage as $key => $value) { ?>
+                               {label: '<?php echo $value; ?>',value: '<?php echo $key; ?>'},
+                            <?php } ?>
+                           ]" value="D" />
+
+                </td>
+            </tr>
+
+            <tr>
+                <td class="fitem"><?php echo xlt('Protocol'); ?>:</td>  
+                <td class="fitem">
+                    <?php
+                    $usage = array(
+                        'DL' => xlt('Download'),
+                        'SFTP' => xlt('SFTP')
+                    );
+                    ?>
+                    <input id="protocol" name="protocol" editable="false" class="easyui-combobox" data-options="
+                           valueField: 'value',
+                           textField: 'label',
+                           data: [
+                           <?php foreach ($usage as $key => $value) { ?>
+                               {label: '<?php echo $value; ?>',value: '<?php echo $key; ?>'},
+                            <?php } ?>
+                           ]" />
+
+                </td>
+            </tr>
+            <tr>
+                <td class="fitem"><?php echo xlt('Remote Host'); ?>:</td>  
+                <td class="fitem"><input type='text' name="remote_host" id="remote_host" value=''
+                                         class="easyui-validatebox combo validatebox-text" style="width:100%" /></td>
+            </tr>
+            <tr>
+                <td class="fitem"><?php echo xlt('Login'); ?>:</td>  
+                <td class="fitem"><input type='text' name="login" id="login" vlaue=''
+                                         class="easyui-validatebox combo validatebox-text" style="width:100%" /></td>
+            </tr>
+            <tr>
+                <td class="fitem"><?php echo xlt('Password'); ?>:</td>  
+                <td class="fitem"><input type='text' name="password" id="password" vlaue=''
+                                         class="easyui-validatebox combo validatebox-text" style="width:100%" /></td>
+            </tr>
+            <tr>
+                <td class="fitem"><?php echo xlt('Orders Path'); ?>:</td>  
+                <td class="fitem"><input type='text' name="orders_path" vlaue=''
+                                         class="easyui-validatebox combo validatebox-text" style="width:100%" /></td>
+            </tr>
+            <tr>
+                <td class="fitem"><?php echo xlt('Results Path'); ?>:</td>  
+                <td class="fitem"><input type='text' name="results_path" vlaue=''
+                                         class="easyui-validatebox combo validatebox-text" style="width:100%" /></td>
+            </tr>
+            <tr>
+                <td class="fitem"><?php echo xlt('Notes'); ?>:</td>  
+                <td class="fitem"><textarea name="notes" rows='3' cols='20'
+                                            class="easyui-validatebox combo validatebox-text"
+                                            style="height:20px; width:100%" ></textarea></td>
+            </tr>
+            <input type='hidden' name="mirth_lab_id" id="mirth_lab_id" vlaue='' />
+            <input type='hidden' name="mirth_lab_name" id="mirth_lab_name" vlaue='' />
+        </table>
+
+    </form>
+
+</div>  
+<div id="dlg-buttons-providers">  
+    <a href="javascript:void(0)" class="easyui-linkbutton" iconCls="icon-ok" onclick="saveProviders()">Save</a>  
+    <a href="javascript:void(0)" class="easyui-linkbutton" iconCls="icon-cancel" onclick="javascript:$('#dlg').dialog('close')">Cancel</a>  
+</div>  
+
+<style type="text/css">  
+    #fm{  
+        margin:0;  
+        padding:10px 30px;  
+    }  
+    .ftitle{  
+        font-size:14px;  
+        font-weight:bold;  
+        padding:5px 0;  
+        margin-bottom:10px;  
+        border-bottom:1px solid #ccc;  
+    }  
+    .fitem{  
+        margin-bottom:5px;  
+    }  
+    .fitem label{  
+        display:inline-block;  
+        width:80px;  
+    }  
+</style>
+
+
+
+
+
+

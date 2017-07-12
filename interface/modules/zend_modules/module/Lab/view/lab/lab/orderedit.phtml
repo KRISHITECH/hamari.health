@@ -1,0 +1,205 @@
+<?php
+/* +-----------------------------------------------------------------------------+
+ *    OpenEMR - Open Source Electronic Medical Record
+ *    Copyright (C) 2013 Z&H Consultancy Services Private Limited <sam@zhservices.com>
+ *
+ *    This program is free software: you can redistribute it and/or modify
+ *    it under the terms of the GNU Affero General Public License as
+ *    published by the Free Software Foundation, either version 3 of the
+ *    License, or (at your option) any later version.
+ *
+ *    This program is distributed in the hope that it will be useful,
+ *    but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *    GNU Affero General Public License for more details.
+ *
+ *    You should have received a copy of the GNU Affero General Public License
+ *    along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *    @author  Sanal Jacob <sanalj@zhservices.com>
+ * +------------------------------------------------------------------------------+
+ */
+$form = $this->form;
+$form->setAttribute('action', $this->url('lab', array('action' => 'index')));
+$form->prepare();
+
+echo $this->form()->openTag($form);
+echo $this->formRow($form->get('patient_id'));
+echo $this->formRow($form->get('encounter_id'));
+echo $this->formRow($form->get('procedurecount[0][]'));
+echo $this->headScript()->prependFile($this->basePath() . '/js/lab/labOrder.js');
+echo $this->headLink()->prependStylesheet($this->basePath() . '/css/labOrder.css')
+?>
+
+<?php if ($this->message == 'N') { ?>
+    <div class="easyui-accordion" style="width:auto;height:550px;">
+        <div  title="<?php echo xlt('Procedur Order'); ?>" style="overflow:auto;padding:10px;">
+            <div id="dlg" class="easyui-dialog" title="<?php echo xlt('Message'); ?>" data-options="iconCls:'icon-tip'" style="width:400px;height:200px;padding:10px">
+                <div style="margin: 50px; font-size: 14px;"><?php echo xlt('Please select a patient'); ?></div>
+            </div>
+        </div>
+    </div>
+<?php } else { ?>
+    <div style="background: linear-gradient(to bottom, #EFF5FF 0px, #E0ECFF 100%) repeat-x scroll 0 0 transparent; padding: 5px;">
+        <div >
+            <a href="#" class="easyui-linkbutton" data-options="iconCls:'icon-save'" onclick="saveEditFrm();"><?php echo xlt('Save'); ?></a>
+            <!-- Progress Bar -->
+            <div id="p" class="easyui-progressbar"  style="width:400px; float: right; display: none;"></div>
+        </div>
+    </div>
+    <!-- Start Layout -->
+    <div class="easyui-layout" style="width:auto;height:550px;">
+        <!-- Start Lab Order List Grid -->
+        <div data-options="region:'west',title:'<?php echo xlt('Lab Order List'); ?>',iconCls:'icon-ok', collapsed:true" style="width:200px;">
+            <div class="easyui-tabs" data-options="fit:true,border:false,plain:true">
+                <div title="Lab Order" style="padding:5px">
+                    <table id='dglist' class="easyui-datagrid"
+                           data-options="url:'./getPatientLabOrders',singleSelect:true,fit:true,fitColumns:true">
+                        <thead>
+                            <tr>
+                                <th data-options="field:'date_ordered'" width="80"><?php echo xlt('Date'); ?></th>
+                                <th data-options="field:'procedure_order_id'" width="70"  align='center'><?php echo xlt('Order Id'); ?></th>
+                                <th data-options="field:'ord_group'" width="40"  align='center'><?php echo xlt('Group'); ?></th>
+                            </tr>
+                        </thead>
+                    </table> 
+                </div>
+            </div>
+        </div>
+        <!-- End Lab Order List Grid -->
+        <!-- Start Lab Order Edit Panels -->
+        <div id='orderlist' data-options="region:'center',split:true,iconCls:'icon-edit'" title="<?php echo xlt('Edit Lab Order'); ?>" style="width:100px;">
+            <div id='accord' class="easyui-accordion" data-options="fit:true,border:false" style="width:auto;height:550px;">
+                <!-- clone here --> 
+            </div><!-- End accord -->
+        </div><!-- End Lab Order Edit Panels -->
+    </div><!-- End Layout -->
+<?php } ?>
+<?php
+echo $this->form()->closeTag();
+echo $this->headScript()
+        ->prependFile($this->basePath() . '/js/lab/lab.js')
+        ->prependFile($this->basePath() . '/js/lib/jquery.autocomplete.js')
+        ->prependFile($this->basePath() . '/js/lib/jQuery.bubbletip-1.0.6.js')
+?>
+
+<!-- Start Row Template -->
+<div style="display:none" id="procedureclonetemplate">
+    <table  id='cloneID_1' class="dv-table gridtable" style="width:100%;background:#fafafa;padding:5px;">
+        <tr>
+            <td width='40%' valign='top'>
+                <input type='hidden' id='procedure_order_seq_1_1' name='procedure_order_seq[0][]' value='' /><!-- Setting Procedure Order ID -->
+                <?php echo $this->formRow($form->get('patient_instructions[0][]')); ?>
+            </td>
+            <td width='20%' valign='top'>
+                <span id="diagnosestemplate">
+                    <?php echo $this->formRow($form->get('diagnoses[0][]')); ?>
+                    <div class="autocomplete-suggestions" id="diagnodiv" style="display:none;z-index:99999;position:relative;min-width:150px"></div>
+                </span>
+            </td>
+            <td width='20%' valign='top'>
+                <span id="proceduretemplate">
+                    <?php echo $this->formRow($form->get('procedures[0][]')); ?>
+                    <div class="autocomplete-suggestions" id="prodiv" style="display:none;z-index:99999;position:relative;min-width:150px"></div>
+                    <?php echo $this->formRow($form->get('procedure_code[0][]')); ?>
+                    <?php echo $this->formRow($form->get('procedure_suffix[0][]')); ?>
+                </span>
+            </td>
+            <td valign='top' align='center'>
+                <span style="padding-left: 10px;" >
+                    <a href="#" id='deleteButton'  style="height: 20px;"  plain="true" onclick="cancelItemEdit(this.id)">
+                        <img  class="easyui-linkbutton" iconCls="icon-cancel" src=<?php echo $this->basePath() . '/css/icons/cancel.png'; ?> title=<?php echo xlt('Cancel'); ?> border=0 />
+                        <?php echo xlt('Cancel'); ?>
+                    </a>
+                </span>
+                <span style="padding-left: 10px;" >
+                    <a href="javascript:void(0)" id='addButton'  plain="true" onclick="addRowEdit(this.id);">
+                        <img  src=<?php echo $this->basePath() . '/css/icons/edit_add.png'; ?> title=<?php echo xlt('Add'); ?> border=0 />
+                        <?php echo xlt('Add'); ?>
+                    </a>
+                </span>
+            </td> 
+        </tr>
+        <tr id="AOEtemplate"  style="display:none">               
+            <td id="AOE" colspan='4'></td>
+        </tr>
+    </table>
+</div>
+<!-- End Row Template -->
+
+<!-- Start New Order Template -->
+<div style="display:none" id="newprocedureclonetemplate">
+    <div id='mainTemplate'>
+        <div id='main' title="<?php echo xlt('Procedur Order'); ?>" data-options="iconCls:'icon-single'" style="overflow:auto;padding:10px;">
+            <div id="toolbar">
+                <span style="padding-left: 10px;" >
+                    <a href="javascript:void(0)" id='addButton'  plain="true" onclick="addRowEdit(this.id);">
+                        <img  src=<?php echo $this->basePath() . '/css/icons/edit_add.png'; ?> title=<?php echo xlt('Add'); ?> border=0 />
+                        <?php echo xlt('Add Procedure'); ?>
+                    </a>
+                </span>
+                <span style="padding-left: 10px;" >
+                    <a href="#"  plain="true" onclick="newOrderEdit();">
+                        <img  class="easyui-linkbutton" iconCls="icon-multiple" src=<?php echo $this->basePath() . '/css/icons/multiple.png'; ?> title=<?php echo xlt('Order'); ?> border=0 />
+                        <?php echo xlt('New Order'); ?>
+                    </a>
+                </span>
+                <span style="margin-left: 67%;">
+                    <a href="javascript:void(0)"  onclick="removeOrderEdit();">
+                        <img  class="easyui-linkbutton" iconCls="icon-no" src=<?php echo $this->basePath() . '/css/icons/no.png'; ?> title=<?php echo xlt('Remove Order'); ?> border=0 />
+                        <?php echo xlt('Remove Order'); ?>
+                    </a>
+                </span>
+            </div>
+            <div id='editor' style="text-align: left; padding-left:20px;">
+                <input type='hidden' id='procedure_order_id' name='procedure_order_id[0][]' value='' /><!-- Setting Procedure Order ID -->
+                <table id='tt' border='0' class="dv-table gridtable" style="width:98%;background:#fafafa;padding:1px;margin-top:5px;margin-bottom:15px;border:1px solid #95B8E7; box-shadow: 10px 10px 5px #E0E0EB;">
+                    <tr style="font-weight: bold">
+                        <td><?php echo xlt('Ordering Provider'); ?></td>
+                        <td><?php echo xlt('Sending To'); ?></td>
+                        <td><?php echo xlt('Order Date'); ?></td>
+                        <td id='internaltimecaption' style="display:none" style="display:none"><?php echo xlt('Internal Time Collected'); ?></td>
+                        <td><?php echo xlt('Internal Comments'); ?></td>
+                        <td id='specimencollectedcaption' style="display:none" ><?php echo xlt('Specimen Collected'); ?></td>
+                        <td><?php echo xlt('Priority'); ?></td>
+                        <td><?php echo xlt('Status'); ?></td>
+                        <td id='billtocaption' style="display:none" valign='top'><?php echo xlt('Bill To'); ?></td>
+                    </tr>
+                    <tr>
+                        <td valign='top'><?php echo $this->formRow($form->get('provider[0][]')); ?></td>
+                        <td valign='top'><?php echo $this->formRow($form->get('lab_id[0][]')); ?></td>
+                        <td valign='top' id="oderingdate"><?php echo $this->formRow($form->get('orderdate[0][]')); ?></td>
+                        <td valign='top' id="internaltime" style="display:none"><?php echo $this->formRow($form->get('timecollected[0][]')); ?></td>
+                        <td  valign='top'><?php echo $this->formRow($form->get('internal_comments[0][]')); ?></td>
+                        <td id='specimencollectedtd' style="display:none" valign='top'><?php echo $this->formRadio($form->get('specimencollected[0][]'), 'prepend'); ?></td>
+                        <td valign='top'><?php echo $this->formRow($form->get('priority[0][]')); ?></td>
+                        <td valign='top'><?php echo $this->formRow($form->get('status[0][]')); ?></td>
+                        <td id='billtotd' style="display:none" valign='top'><?php echo $this->formRow($form->get('billto[0][]')); ?></td>
+                    </tr>
+                </table>
+
+                <table id='dgord' border='0'  style="width:98%;background:#fafafa;padding:5px;margin-top:5px;margin-bottom:15px;border:1px solid #95B8E7; box-shadow: 10px 10px 5px #E0E0EB;">
+                    <tr>
+                        <td>
+                            <table class="dv-table gridtable" style="width:100%;background:#fafafa;padding:5px;">
+                                <tr  style="font-weight: bold">
+                                    <td width='40%' valign='top'><?php echo xlt('Patient Instructions'); ?></td>
+                                    <td width='20%' valign='top'><?php echo xlt('Diagnosis'); ?></td>
+                                    <td width='20%' valign='top'><?php echo xlt('Procedure'); ?></td>
+                                    <td align='center'><?php echo xlt('Action'); ?></td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                    <!-- -->
+                    <tr>
+                        <td id="insTempl">
+
+                        </td>
+                    </tr>
+                    <!-- -->
+                </table><!-- End dgord-->
+            </div><!-- End editor -->
+        </div><!-- End main -->
+    </div>
+</div>
+<!-- End New Order Template -->
