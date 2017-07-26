@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 // Copyright (C) 2010-2015 Rod Roark <rod@sunsetsystems.com>
 //
 // This program is free software; you can redistribute it and/or
@@ -127,6 +127,7 @@ function gblTimeZones()
     foreach ($zones as $zone) {
         $arr[$zone] = str_replace('_', ' ', $zone);
     }
+
     return $arr;
 }
 
